@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Import Présences — Orange Maroc</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --orange:#ff7900; --orange-2:#ff9b3d; --bg:#0b0b0e;
+      --glass:rgba(255,255,255,.06); --border:rgba(255,255,255,.18);
+      --text:#eef0f3; --muted:#a7acb3; --danger:#ef4444; --success:#22c55e;
+    }
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text); background:
+      radial-gradient(1100px 520px at 85% -10%, rgba(255,121,0,.35), transparent 40%),
+      radial-gradient(900px 480px at 10% 110%, rgba(255,153,0,.25), transparent 55%),
+      linear-gradient(140deg, #0b0b0e, #111318 35%, #0a0c11 70%);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    }
+    .grid{position:fixed;inset:0;pointer-events:none;opacity:.25;z-index:-1;
+      background-image:linear-gradient(to right, rgba(255,255,255,.05) 1px, transparent 1px),
+                       linear-gradient(to bottom, rgba(255,255,255,.05) 1px, transparent 1px);
+      background-size:40px 40px; animation:pan 16s linear infinite;}
+    @keyframes pan{from{background-position:0 0,0 0}to{background-position:80px 80px,80px 80px}}
+    .nav{position:sticky;top:0;backdrop-filter:blur(10px);background:linear-gradient( to right, rgba(17,17,20,.35), rgba(17,17,20,.15) );border-bottom:1px solid var(--border);}
+    .nav-inner{max-width:1120px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .badge{background:#fff;border-radius:10px;padding:6px 8px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 30px rgba(255,121,0,.25)}
+    .badge img{height:28px;display:block}
+    .badge span{color:#111;font-weight:800}
+    .muted{color:var(--muted)}
+    .wrap{max-width:980px;margin:28px auto;padding:0 16px}
+    .title{font-weight:900;letter-spacing:.2px;font-size:clamp(26px,4.2vw,42px);margin:0 0 6px}
+    .subtitle{margin:0 0 22px;color:var(--muted)}
+    .card{border-radius:22px; backdrop-filter:blur(14px);background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));border:1px solid var(--border); overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.28), 0 0 0 1px rgba(255,255,255,.02) inset;}
+    .card-hd{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid var(--border);background:radial-gradient(800px 180px at 15% 0%, rgba(255,121,0,.12), transparent 60%),linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));}
+    .hd-left{display:flex;gap:12px;align-items:center}
+    .icon{color:var(--orange);filter:drop-shadow(0 8px 18px rgba(255,121,0,.35));font-size:22px}
+    .dz{margin:22px;padding:26px;border:1.5px dashed rgba(255,255,255,.28);border-radius:16px;text-align:center;background:rgba(17,17,20,.35);position:relative;transition:.2s}
+    .dz.drag{border-color:var(--orange);box-shadow:inset 0 0 0 2px rgba(255,121,0,.3)}
+    .dz .halo{position:absolute;inset:-1px;border-radius:16px;pointer-events:none;background:radial-gradient(500px 140px at 50% -20%, rgba(255,121,0,.25), transparent 60%),radial-gradient(500px 140px at 50% 120%, rgba(255,153,0,.18), transparent 60%);mix-blend-mode:screen}
+    .btn{display:inline-flex;align-items:center;gap:10px;border:none;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;background:linear-gradient(90deg, var(--orange), var(--orange-2));color:#111;box-shadow:0 12px 30px rgba(255,121,0,.35), 0 0 0 1px rgba(255,255,255,.15) inset;transition:transform .12s ease, filter .12s ease;}
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+    .btn:active{transform:translateY(0)}
+    .file-name{margin-top:10px;font-weight:600}
+    .actions{display:flex;justify-content:flex-end;align-items:center;gap:20px;padding:8px 22px 22px}
+    .alerts{margin:12px 22px 0}
+    .alert{border:1px solid rgba(239,68,68,.4); background:rgba(239,68,68,.12); color:#ffdada;padding:10px 12px;border-radius:10px;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start}
+    .ok{border:1px solid rgba(34,197,94,.35); background:rgba(34,197,94,.12); color:#d6ffe5}
+  </style>
+</head>
+<body>
+<div class="grid"></div>
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <span class="badge">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Orange Logo">
+        <span>Orange&nbsp;Maroc</span>
+      </span>
+      <span class="muted">Plateforme RH — Import des présences</span>
+    </div>
+  </div>
+</header>
+<main class="wrap">
+  <h1 class="title">Importer. Analyser. Agir.</h1>
+  <p class="subtitle">Déposez votre rapport CSV — nous générons les anomalies.</p>
+  <section class="card">
+    <div class="card-hd">
+      <div class="hd-left">
+        <span class="icon">☁️</span>
+        <div>
+          <div style="font-weight:700">Importer un rapport de présence (CSV)</div>
+          <div class="small-muted">Formats : UTF-8, séparateur virgule.</div>
+        </div>
+      </div>
+    </div>
+    {% if messages %}
+      <div class="alerts">
+        {% for m in messages %}
+          <div class="alert{% if m.tags == 'success' %} ok{% endif %}">
+            <span>{% if m.tags == 'success' %}✅{% else %}⚠️{% endif %}</span>
+            <div>{{ m }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
+   <form id="uploadForm" action="{% url 'core:upload_csv' %}" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="dz" id="drop">
+        <div class="halo"></div>
+        {# On cache l'input de fichier de Django, mais il est toujours là #}
+        <div style="display:none;">{{ form.file }}</div> 
+        
+        <div style="font-weight:700">Glissez-déposez votre fichier ici</div>
+        <div class="small-muted" style="margin:6px 0 14px">…ou cliquez pour sélectionner un fichier CSV</div>
+        <button type="button" class="btn" id="pick"> Choisir un fichier</button>
+        <div id="name" class="file-name"></div>
+      </div>
+
+      {# MODIFIÉ : La section "actions" contient maintenant seulement le bouton d'import #}
+      <div class="actions">
+        <button class="btn" type="submit"> Lancer l’import</button>
+      </div>
+    </form>
+  </section>
+</main>
+<script>
+  const drop = document.getElementById('drop');
+  const pick = document.getElementById('pick');
+  const fileInput = document.querySelector('input[name="file"]');
+  const nameEl = document.getElementById('name');
+
+  function setName(f){ nameEl.textContent = f ? f.name : ''; }
+  
+  pick.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => setName(fileInput.files[0]));
+
+  ['dragenter','dragover'].forEach(evName => drop.addEventListener(evName, e => { e.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(evName => drop.addEventListener(evName, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+  
+  drop.addEventListener('drop', e => {
+    const f = e.dataTransfer.files?.[0]; if(!f) return;
+    if(!f.name.toLowerCase().endsWith('.csv')) { alert('Seuls les fichiers CSV sont acceptés.'); return; }
+    fileInput.files = e.dataTransfer.files; setName(f);
+  });
+</script>
+</body>
+</html>

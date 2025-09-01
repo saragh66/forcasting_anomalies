@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bienvenue — Orange RH{% endblock %}
+
+{% block extra_css %}
+  <link href="{% static 'css/landing-advanced.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="landing-bg">
+  <!-- Bulles animées -->
+  <div class="bubble" style="--size: 120px; --x:20%; --y:90%; --d:0s;"></div>
+  <div class="bubble" style="--size: 80px;  --x:75%; --y:85%; --d:2s;"></div>
+  <div class="bubble" style="--size: 150px; --x:40%; --y:30%; --d:1s;"></div>
+  <div class="bubble" style="--size: 100px; --x:90%; --y:50%; --d:3s;"></div>
+
+  <!-- Card floutée -->
+  <div class="landing-card text-center">
+    <h1>Bienvenue sur <span class="highlight">Orange RH</span></h1>
+    <p>Choisissez votre interface :</p>
+    <div class="landing-buttons">
+      <a href="{% url 'login_rh' %}"  class="btn-pill btn-rh">Connexion RH</a>
+      <a href="{% url 'login_sup' %}" class="btn-pill btn-sup">Connexion Supérieur</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+

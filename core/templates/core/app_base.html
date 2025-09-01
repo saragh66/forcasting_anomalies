@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    :root { 
+        --sidebar-width: 280px;
+        --sidebar-width-collapsed: 85px;
+        --top-navbar-height: 70px;
+    }
+    .sidebar {
+        width: var(--sidebar-width); min-height: 100vh; background-color: #fff;
+        position: fixed; top: 0; left: 0; height: 100%;
+        transition: width 0.3s ease-in-out;
+        box-shadow: 0 0 20px rgba(0,0,0,0.05); z-index: 1000;
+        overflow-x: hidden;
+    }
+    .sidebar .nav-link .link-text { transition: opacity 0.2s ease-in-out; }
+    
+    body.sidebar-collapsed .sidebar { width: var(--sidebar-width-collapsed); }
+    body.sidebar-collapsed .sidebar-header span,
+    body.sidebar-collapsed .nav-link .link-text,
+    body.sidebar-collapsed .sidebar-footer { display: none; }
+    body.sidebar-collapsed .sidebar-header { justify-content: center !important; }
+
+    .main-content { transition: margin-left 0.3s ease-in-out; margin-left: var(--sidebar-width); }
+    body.sidebar-collapsed .main-content { margin-left: var(--sidebar-width-collapsed); }
+    
+    .top-navbar { height: var(--top-navbar-height); background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.05); padding: 0 2rem; position: sticky; top: 0; z-index: 999; }
+    #sidebar-toggle { font-size: 1.5rem; cursor: pointer; color: #555; }
+    .content-wrapper { padding: 2rem; }
+    .nav-link i { width: 25px; margin-right: 0.8rem; text-align: center; }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="d-flex">
+    <nav class="sidebar d-flex flex-column p-3">
+        <div class="sidebar-header d-flex align-items-center mb-3">
+            <a href="{% url 'core:rh_dashboard' %}" class="d-flex align-items-center text-dark text-decoration-none w-100">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo" style="height: 28px;">
+                <span class="fs-4 fw-bold ms-2">Plateforme RH</span>
+            </a>
+        </div>
+        <ul class="nav nav-pills flex-column mb-auto mt-4">
+            <li class="nav-item mb-2"><a href="{% url 'core:rh_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'rh_dashboard' %}active{% endif %}"><i class="fas fa-tachometer-alt fa-fw"></i><span class="link-text">Dashboard</span></a></li>
+            <li class="nav-item mb-2"><a href="{% url 'core:liste_anomalies' %}" class="nav-link {% if request.resolver_match.url_name == 'liste_anomalies' %}active{% endif %}"><i class="fas fa-exclamation-triangle fa-fw"></i><span class="link-text">Anomalies</span></a></li>
+            <li class="nav-item mb-2"><a href="{% url 'core:historique_emails' %}" class="nav-link {% if request.resolver_match.url_name == 'historique_emails' %}active{% endif %}"><i class="fas fa-history fa-fw"></i><span class="link-text">Historique</span></a></li>
+            <li class="nav-item mb-2"><a href="{% url 'core:statistiques_view' %}" class="nav-link {% if request.resolver_match.url_name == 'statistiques_view' %}active{% endif %}"><i class="fas fa-chart-pie fa-fw"></i><span class="link-text">Statistiques</span></a></li>
+            <li class="nav-item mb-2"><a href="{% url 'analytics:dashboard' %}" class="nav-link {% if request.resolver_match.app_name == 'analytics' %}active{% endif %}"><i class="fas fa-chart-line fa-fw"></i><span class="link-text">Analyse Prédictive</span></a></li>
+        </ul>
+        <div class="sidebar-footer mt-auto"><hr><a href="#" class="nav-link"><i class="fas fa-sign-out-alt fa-fw"></i><span class="link-text">Déconnexion</span></a></div>
+    </nav>
+    <div class="main-content flex-grow-1">
+        <header class="top-navbar d-flex justify-content-between align-items-center">
+            <i class="fas fa-bars" id="sidebar-toggle"></i>
+            <div></div>
+        </header>
+        <main class="content-wrapper">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const body = document.body;
+        if (window.innerWidth < 992) { body.classList.add('sidebar-collapsed'); }
+        sidebarToggle.addEventListener('click', () => { body.classList.toggle('sidebar-collapsed'); });
+    });
+</script>
+{% endblock %}

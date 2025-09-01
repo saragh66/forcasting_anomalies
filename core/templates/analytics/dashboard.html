@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analyse Prédictive - Dashboard{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-custom mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'core:rh_dashboard' %}">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo Orange">
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
+                <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'core:historique_emails' %}">Historique</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+            </ul>
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Déconnexion</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container-fluid mt-4">
+    <!-- TITRE DE LA PAGE -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Analyse Prédictive & Dashboard</h1>
+        <div id="loading-spinner" class="spinner-border text-primary" role="status" style="display: none;">
+            <span class="visually-hidden">Chargement...</span>
+        </div>
+    </div>
+
+    <!-- FILTRES DE CONTROLE -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <label for="level-select" class="form-label">Niveau d'analyse</label>
+                    <select id="level-select" class="form-select">
+                        <option value="global" selected>Global</option>
+                        <option value="direction">Par Direction</option>
+                        <option value="departement">Par Département</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="key-id-select" class="form-label">Entité Spécifique</label>
+                    <select id="key-id-select" class="form-select" disabled>
+                        <option value="">-- Sélectionnez --</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="freq-select" class="form-label">Fréquence</label>
+                    <select id="freq-select" class="form-select">
+                        <option value="W" selected>Hebdomadaire</option>
+                        <option value="M">Mensuel</option>
+                        <option value="D">Journalier</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button id="update-dashboard-btn" class="btn btn-primary w-100">Mettre à jour</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INDICATEURS CLÉS DE PERFORMANCE (KPIs) -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total Anomalies Observées</h6>
+                    <p id="kpi-total" class="fs-2 fw-bold">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Prévision Période Suivante</h6>
+                    <p id="kpi-forecast" class="fs-2 fw-bold">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Tendance Prévue</h6>
+                    <p id="kpi-trend" class="fs-2 fw-bold d-flex align-items-center justify-content-center">
+                        <span>-</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Modèle de Prévision</h6>
+                    <p id="kpi-model" class="fs-4 fw-bold text-primary">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRAPHIQUE PRINCIPAL -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h5 id="chart-title" class="mb-0">Évolution Globale des Anomalies</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="anomaliesChart" style="min-height: 400px;"></canvas>
+        </div>
+    </div>
+</div>
+
+{{ directions|json_script:"directions-data" }}
+{{ departements|json_script:"departements-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Librairies externes pour les graphiques -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const levelSelect = document.getElementById('level-select');
+    const keyIdSelect = document.getElementById('key-id-select');
+    const freqSelect = document.getElementById('freq-select');
+    const updateBtn = document.getElementById('update-dashboard-btn');
+    const spinner = document.getElementById('loading-spinner');
+    
+    const contextData = {
+        directions: JSON.parse(document.getElementById('directions-data').textContent),
+        departements: JSON.parse(document.getElementById('departements-data').textContent)
+    };
+    
+    let anomaliesChartInstance = null;
+
+    levelSelect.addEventListener('change', function() {
+        const level = this.value;
+        keyIdSelect.innerHTML = '<option value="">-- Sélectionnez --</option>';
+        keyIdSelect.disabled = true;
+
+        let options = [];
+        if (level === 'direction') {
+            options = contextData.directions;
+            keyIdSelect.disabled = false;
+        } else if (level === 'departement') {
+            options = contextData.departements;
+            keyIdSelect.disabled = false;
+        }
+
+        options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.id;
+            option.textContent = opt.nom;
+            keyIdSelect.appendChild(option);
+        });
+    });
+
+    updateBtn.addEventListener('click', fetchDataAndRender);
+
+    async function fetchDataAndRender() {
+        spinner.style.display = 'block';
+        updateBtn.disabled = true;
+
+        const level = levelSelect.value;
+        const keyId = keyIdSelect.value;
+        const freq = freqSelect.value;
+
+        if ((level === 'direction' || level === 'departement') && !keyId) {
+            alert("Veuillez sélectionner une entité spécifique.");
+            spinner.style.display = 'none';
+            updateBtn.disabled = false;
+            return;
+        }
+
+        const apiBaseUrl = "{% url 'analytics:api_ts' %}";
+        const apiUrl = `${apiBaseUrl}?level=${level}&key_id=${keyId || 'all'}&freq=${freq}&periods=12`;
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+            const data = await response.json();
+            
+            updateKPIs(data.kpis, data.model_used);
+            updateChart(data.timeseries_data, data.forecast, freq);
+            updateChartTitle();
+
+        } catch (error) {
+            console.error("Erreur lors de la récupération des données:", error);
+            alert("Impossible de charger les données. Vérifiez la console pour plus de détails.");
+        } finally {
+            spinner.style.display = 'none';
+            updateBtn.disabled = false;
+        }
+    }
+
+    function updateKPIs(kpis, model_used) {
+        document.getElementById('kpi-total').textContent = kpis.total_observed ?? '0';
+        document.getElementById('kpi-forecast').textContent = kpis.next_period_forecast ?? '0';
+        document.getElementById('kpi-model').textContent = model_used || '-';
+        const trendElement = document.getElementById('kpi-trend');
+        const trendIcon = {
+            up: '<i class="bi bi-arrow-up-circle-fill text-danger me-2"></i>',
+            down: '<i class="bi bi-arrow-down-circle-fill text-success me-2"></i>',
+            stable: '<i class="bi bi-arrow-right-circle-fill text-secondary me-2"></i>'
+        };
+        const trendDirection = kpis.trend_direction || 'stable';
+        trendElement.innerHTML = `${trendIcon[trendDirection]} ${kpis.trend_percentage ?? 0}%`;
+    }
+
+    function updateChartTitle() {
+        const levelText = levelSelect.options[levelSelect.selectedIndex].text;
+        let entityText = "";
+        if (keyIdSelect.value && !keyIdSelect.disabled) {
+            entityText = `pour ${keyIdSelect.options[keyIdSelect.selectedIndex].text}`;
+        }
+        document.getElementById('chart-title').textContent = `Évolution ${levelText} des Anomalies ${entityText}`;
+    }
+
+    function updateChart(timeseries = [], forecast = [], freq = 'W') {
+        const ctx = document.getElementById('anomaliesChart').getContext('2d');
+        const observedData = timeseries.map(d => ({ x: d.ds, y: d.y }));
+        const forecastData = forecast ? forecast.map(d => ({ x: d.ds, y: d.yhat })) : [];
+        const forecastLower = forecast ? forecast.map(d => ({ x: d.ds, y: d.yhat_lower })) : [];
+        const forecastUpper = forecast ? forecast.map(d => ({ x: d.ds, y: d.yhat_upper })) : [];
+        
+        if (observedData.length > 0 && forecastData.length > 0) {
+            forecastData.unshift(observedData[observedData.length - 1]);
+            // On ne met pas de bande de confiance pour le point de jointure
+            forecastLower.unshift({x: observedData[observedData.length-1].x, y: null});
+            forecastUpper.unshift({x: observedData[observedData.length-1].x, y: null});
+        }
+        
+        const chartData = {
+            datasets: [{
+                label: 'Anomalies Observées', // index 0
+                data: observedData,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                tension: 0.1,
+            }, {
+                label: 'Prévision', // index 1
+                data: forecastData,
+                borderColor: 'rgb(255, 99, 132)',
+                borderDash: [5, 5],
+                tension: 0.1,
+            }, {
+                label: 'Intervalle de Confiance', // index 2
+                data: forecastUpper,
+                borderColor: 'transparent',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                pointRadius: 0,
+                // --- CORRECTION GRAPHIQUE ---
+                // On dit explicitement de remplir jusqu'au dataset à l'index 3
+                fill: 3,
+            }, {
+                label: 'Borne Inférieure', // index 3 (non visible, sert de limite)
+                data: forecastLower,
+                borderColor: 'transparent',
+                pointRadius: 0,
+            }]
+        };
+        
+        const timeUnit = freq === 'D' ? 'day' : (freq === 'M' ? 'month' : 'week');
+        if (anomaliesChartInstance) {
+            anomaliesChartInstance.data = chartData;
+            anomaliesChartInstance.options.scales.x.time.unit = timeUnit;
+            anomaliesChartInstance.update();
+        } else {
+            anomaliesChartInstance = new Chart(ctx, {
+                type: 'line', data: chartData,
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'time', time: { unit: timeUnit, tooltipFormat: 'dd/MM/yyyy' }, title: { display: true, text: 'Date' } },
+                        y: { beginAtZero: true, title: { display: true, text: "Nombre d'anomalies" } }
+                    },
+                    plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false } }
+                }
+            });
+        }
+    }
+    
+    fetchDataAndRender();
+});
+</script>
+{% endblock %}

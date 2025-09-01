@@ -1,0 +1,34 @@
+# .gitignore
+
+# Fichiers de configuration sensibles
+.env
+*.env
+
+# Environnement virtuel
+.venv/
+env/
+venv/
+
+# Fichiers de cache Python
+__pycache__/
+*.pyc
+
+# Base de données locale
+db.sqlite3
+db.sqlite3-journal
+
+# Fichiers média et statiques collectés
+/media/
+/static_collected/
+
+# Fichiers générés par les IDE
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Fichiers de système d'exploitation
+.DS_Store
+Thumbs.db

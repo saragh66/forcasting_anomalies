@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard de Performance - Orange RH{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .page-title { font-weight: 300; font-size: 2.5rem; }
+    .kpi-card { background-color: #fff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 1.5rem; margin-bottom: 1.5rem; transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1px solid #e9ecef; }
+    .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+    .kpi-card h5 { font-weight: 600; color: #343a40; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
+    .kpi-value { font-size: 2rem; font-weight: 700; color: var(--orange-primary); line-height: 1; }
+    .kpi-label { font-size: 0.8rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.25rem; }
+    .trend-icon { font-size: 1.2rem; }
+    .trend-value { font-size: 1.25rem; font-weight: 600; }
+    .trend-down { color: #198754; } 
+    .trend-up { color: #dc3545; }
+    .trend-stable { color: #6c757d; }
+    .sparkline-chart-container { height: 60px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-custom mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'core:rh_dashboard' %}">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo Orange">
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
+                <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'core:historique_emails' %}">Historique</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+            </ul>
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Déconnexion</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container-fluid p-4">
+    <h1 class="page-title mb-4">Dashboard de Performance des Anomalies</h1>
+    <div class="row">
+        <div class="col-xl-6">
+            <h4 class="mb-3" style="font-weight: 400;">Tendances par Direction</h4>
+            {% for stat in stats_by_direction %}
+            <div class="kpi-card">
+                <h5>{{ stat.name }}</h5>
+                <div class="row align-items-center">
+                    <div class="col-4 text-center">
+                        <div class="kpi-value">{{ stat.kpis.total_observed }}</div>
+                        <div class="kpi-label">Anomalies</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="trend-value trend-{{ stat.kpis.trend_direction }}">
+                            <i class="fas {% if stat.kpis.trend_direction == 'up' %}fa-arrow-trend-up{% elif stat.kpis.trend_direction == 'down' %}fa-arrow-trend-down{% else %}fa-minus{% endif %} trend-icon"></i>
+                            {{ stat.kpis.trend_percentage }}%
+                        </div>
+                        <div class="kpi-label">Tendance</div>
+                    </div>
+                    <div class="col-4 sparkline-chart-container">
+                        <canvas class="sparkline-chart"
+                                data-labels="{{ stat.timeseries.ds|join:',' }}"
+                                data-values="{{ stat.timeseries.y|join:',' }}"></canvas>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                <div class="alert alert-info">Aucune donnée disponible pour les directions.</div>
+            {% endfor %}
+        </div>
+        <div class="col-xl-6">
+            <h4 class="mb-3" style="font-weight: 400;">Tendances par Département</h4>
+            {% for stat in stats_by_departement %}
+            <div class="kpi-card">
+                <h5>{{ stat.name }}</h5>
+                 <div class="row align-items-center">
+                    <div class="col-4 text-center">
+                        <div class="kpi-value">{{ stat.kpis.total_observed }}</div>
+                        <div class="kpi-label">Anomalies</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="trend-value trend-{{ stat.kpis.trend_direction }}">
+                            <i class="fas {% if stat.kpis.trend_direction == 'up' %}fa-arrow-trend-up{% elif stat.kpis.trend_direction == 'down' %}fa-arrow-trend-down{% else %}fa-minus{% endif %} trend-icon"></i>
+                            {{ stat.kpis.trend_percentage }}%
+                        </div>
+                        <div class="kpi-label">Tendance</div>
+                    </div>
+                    <div class="col-4 sparkline-chart-container">
+                        <canvas class="sparkline-chart"
+                                data-labels="{{ stat.timeseries.ds|join:',' }}"
+                                data-values="{{ stat.timeseries.y|join:',' }}"></canvas>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                 <div class="alert alert-info">Aucune donnée disponible pour les départements.</div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function createSparkline(canvas) {
+        if (!canvas) return;
+        const labels = canvas.dataset.labels.split(',');
+        const values = canvas.dataset.values.split(',').map(Number);
+        const trendValueEl = canvas.closest('.kpi-card').querySelector('.trend-value');
+        let borderColor = '#6c757d'; // Stable
+        if (trendValueEl.classList.contains('trend-up')) borderColor = '#dc3545'; // Up
+        else if (trendValueEl.classList.contains('trend-down')) borderColor = '#198754'; // Down
+        new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values, borderColor: borderColor, borderWidth: 2.5,
+                    pointRadius: 0, tension: 0.4, fill: true,
+                    backgroundColor: (ctx) => {
+                        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
+                        gradient.addColorStop(0, `${borderColor}40`);
+                        gradient.addColorStop(1, `${borderColor}00`);
+                        return gradient;
+                    },
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false, beginAtZero: true } } }
+        });
+    }
+    document.querySelectorAll('.sparkline-chart').forEach(createSparkline);
+});
+</script>
+{% endblock %}

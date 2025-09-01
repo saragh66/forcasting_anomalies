@@ -1,0 +1,92 @@
+/* 🌈 Gradient animé */
+@keyframes gradientBG {
+  0%   { background-position:0% 50%; }
+  50%  { background-position:100% 50%; }
+  100% { background-position:0% 50%; }
+}
+.landing-bg {
+  position: relative;
+  width: 100%; height: 100vh;
+  background: linear-gradient(-45deg,#ff8f00,#ffca28,#f57c00,#ef6c00);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* 🌬️ Bulles qui montent et disparaissent */
+@keyframes rise {
+  0%   { transform: translateY(0) scale(1);    opacity:0.6; }
+  50%  { transform: translateY(-40vh) scale(1.2); opacity:0.3; }
+  100% { transform: translateY(-80vh) scale(1);    opacity:0; }
+}
+.bubble {
+  position: absolute;
+  width:  var(--size);
+  height: var(--size);
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  bottom: var(--y);
+  left:   var(--x);
+  animation: rise 8s infinite ease-in-out var(--d);
+}
+
+/* ❄️ Card style “frosted glass” */
+.landing-card {
+  position: relative; z-index: 2;
+  max-width: 380px;
+  padding: 2.5rem 2rem;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  color: #fff;
+}
+.landing-card h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+.landing-card p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* ✨ Effet “texte découpé” */
+.highlight {
+  background: linear-gradient(45deg,#fff,rgba(255,255,255,0.4));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+}
+
+/* 🔘 Boutons “pill” */
+.landing-buttons {
+  display: flex; gap: 1rem; justify-content: center;
+}
+.btn-pill {
+  padding: 0.7rem 1.6rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+.btn-rh {
+  background: #fff; color: #ff7900;
+}
+.btn-sup {
+  background: rgba(255,255,255,0.25); color: #fff;
+}
+.btn-pill:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(0,0,0,0.3);
+}
+
+
+
+
+

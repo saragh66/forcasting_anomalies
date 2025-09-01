@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport d'Historique des E-mails</title>
+    <style>
+        @page { size: A4 landscape; margin: 1.5cm; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 9pt; color: #333; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #FF7900; padding-bottom: 10px; }
+        .header img { width: 120px; }
+        h1 { font-size: 20pt; font-weight: 300; text-align: center; }
+        .meta-info { text-align: center; font-size: 8pt; color: #666; margin-bottom: 25px; }
+        .limit-note { background-color: #fffbe6; border: 1px solid #ffe58f; color: #8a6d3b; padding: 10px; margin-bottom: 20px; font-size: 8pt; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        .anomaly-detail-item { display: block; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo Orange">
+    </div>
+    <h1>Rapport d'Historique des E-mails Envoyés</h1>
+    <div class="meta-info">Généré le : {% now "d/m/Y à H:i" %}</div>
+
+    {% if is_limited %}
+        <div class="limit-note">
+            <strong>Attention :</strong> Ce rapport a été limité aux <strong>{{ limit }}</strong> e-mails les plus récents correspondant à vos filtres. 
+            Un total de <strong>{{ total_results }}</strong> e-mails ont été trouvés.
+        </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Matricule</th>
+                <th>Collaborateur</th>
+                <th>Manager (CC)</th>
+                <th>Détails des Anomalies</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for email in emails %}
+            <tr>
+                <td>{{ email.created_at|date:"d/m/Y H:i" }}</td>
+                <td><b>{{ email.collaborator.matricule|default:"N/A" }}</b></td>
+                <td>
+                    {{ email.collaborator.prenom }} {{ email.collaborator.nom }}
+                    <br><small>{{ email.to_email }}</small>
+                </td>
+                <td>{{ email.cc_manager|default:"-" }}</td>
+                <td>
+                    {% if email.pointage and email.pointage.anomalies.all %}
+                        {% for anomalie in email.pointage.anomalies.all %}
+                            <span class="anomaly-detail-item"><strong>{{ anomalie.get_type_display }}:</strong> {{ anomalie.detail }}</span>
+                        {% endfor %}
+                    {% else %}
+                        {{ email.subject }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 20px;">Aucun email trouvé pour les filtres sélectionnés.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

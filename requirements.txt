@@ -1,0 +1,10 @@
+# requirements.txt
+Django~=5.0
+celery[redis]
+pandas
+numpy
+python-dateutil
+prophet
+WeasyPrint
+mysqlclient
+python-decouple

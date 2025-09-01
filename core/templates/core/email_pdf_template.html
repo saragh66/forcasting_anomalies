@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport d'Historique des E-mails</title>
+    <style>
+        @page { size: A4 landscape; margin: 1cm; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 9pt; color: #333; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header img { width: 100px; }
+        h1 { font-size: 20pt; font-weight: 300; color: #FF7900; border-bottom: 2px solid #FF7900; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/1200px-Orange_logo.svg.png" alt="Logo Orange">
+    </div>
+    <h1>Rapport d'Historique des E-mails Envoyés</h1>
+    <p>Généré le : {% now "d/m/Y à H:i" %}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Matricule</th>
+                <th>Collaborateur</th>
+                <th>Manager (CC)</th>
+                <th>Cause Anomalie</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for email in emails %}
+            <tr>
+                <td>{{ email.created_at|date:"d/m/Y H:i" }}</td>
+                <td><b>{{ email.collaborator.matricule }}</b></td>
+                <td>{{ email.collaborator.prenom }} {{ email.collaborator.nom }}<br><small>{{ email.to_email }}</small></td>
+                <td>
+                    {% if email.manager %}{{ email.manager.get_full_name|default:"" }}{% endif %}
+                    <br><small>{{ email.cc_manager|default:"-" }}</small>
+                </td>
+                <td>{{ email.subject }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center;">Aucun email trouvé pour les filtres sélectionnés.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

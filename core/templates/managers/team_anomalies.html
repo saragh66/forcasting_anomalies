@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Analyse des Anomalies de l'Équipe{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background-color: #f4f5f7; }
+    .page-title { font-weight: 300; }
+    .kpi-card { background-color: #fff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 1.5rem; text-align: center; }
+    .kpi-value { font-size: 2.5rem; font-weight: 700; color: #FF7900; }
+    .kpi-label { font-size: 0.9rem; color: #6c757d; }
+    .card { border: none; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .table thead th { background-color: #e9ecef; font-weight: 600; font-size: 0.8rem; }
+    .anomaly-icon {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 30px; height: 30px; border-radius: 50%;
+        color: white; margin-right: 10px;
+    }
+    .icon-late { background-color: #ffc107; } /* Jaune */
+    .icon-leave { background-color: #fd7e14; } /* Orange */
+    .icon-insuf { background-color: #dc3545; } /* Rouge */
+    .icon-badge { background-color: #6f42c1; } /* Violet */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items:center mb-4">
+        <h1 class="page-title h2">Analyse des Anomalies de Mon Équipe</h1>
+        <a href="{% url 'managers:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Retour
+        </a>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label for="collaborateur" class="form-label">Collaborateur Spécifique</label>
+                    <select name="collaborateur" id="collaborateur" class="form-select">
+                        <option value="">Toute l'équipe</option>
+                        {% for c in collaborateurs_equipe %}
+                            <option value="{{ c.id }}" {% if filters.collaborateur == c.id|stringformat:"s" %}selected{% endif %}>
+                                {{ c.prenom }} {{ c.nom }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label for="start_date" class="form-label">À partir du</label>
+                    <input type="date" name="start_date" id="start_date" value="{{ filters.start_date|default:'' }}" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- KPIs et Graphique -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="kpi-card"><div class="kpi-value">{{ kpis.total }}</div><div class="kpi-label">Anomalies (Sélection)</div></div>
+            <div class="kpi-card mt-4"><div class="kpi-value">{{ kpis.type_frequent }}</div><div class="kpi-label">Type le plus fréquent</div></div>
+        </div>
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Top Collaborateurs par Nombre d'Anomalies</h5>
+                    {% if chart_data %}<canvas id="teamAnomaliesChart"></canvas>{% else %}<p class="text-muted">Pas assez de données pour le graphique.</p>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des Anomalies -->
+    <div class="card">
+        <div class="card-header">
+            <h5>Détail des Anomalies</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th class="ps-4">Date</th><th>Collaborateur</th><th>Anomalie</th></tr></thead>
+                <tbody>
+                    {% for anomalie in anomalies %}
+                    <tr>
+                        <td class="ps-4">{{ anomalie.pointage.date|date:"d M Y" }}</td>
+                        <td>{{ anomalie.pointage.collaborateur.prenom }} {{ anomalie.pointage.collaborateur.nom }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if anomalie.type == 'ENTREE_TARDIVE' %}<span class="anomaly-icon icon-late"><i class="fas fa-clock"></i></span>
+                                {% elif anomalie.type == 'SORTIE_ANTICIPEE' %}<span class="anomaly-icon icon-leave"><i class="fas fa-person-walking-arrow-right"></i></span>
+                                {% elif anomalie.type == 'PRESENCE_INSUFFISANTE' %}<span class="anomaly-icon icon-insuf"><i class="fas fa-battery-half"></i></span>
+                                {% elif anomalie.type == 'BADGEAGE_IMPAIR' %}<span class="anomaly-icon icon-badge"><i class="fas fa-fingerprint"></i></span>
+                                {% endif %}
+                                <div>
+                                    <strong class="d-block">{{ anomalie.get_type_display }}</strong>
+                                    <small class="text-muted">{{ anomalie.detail }}</small>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted p-5"><h4>Aucune anomalie trouvée pour les filtres sélectionnés.</h4></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ chart_data|json_script:"chart-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+    const ctx = document.getElementById('teamAnomaliesChart');
+    if (ctx && chartData.length > 0) {
+        const labels = chartData.map(item => `${item.pointage__collaborateur__prenom} ${item.pointage__collaborateur__nom}`);
+        const data = chartData.map(item => item.count);
+
+        new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label: "Anomalies", data: data, backgroundColor: 'rgba(255, 121, 0, 0.7)' }] },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

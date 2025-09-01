@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Historique des E-mails de l'Équipe{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background-color: #f4f5f7; }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .page-title { font-weight: 300; }
+    .card { 
+        border: none; 
+        border-radius: 0.75rem; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+    }
+    
+    /* Styles pour la Timeline */
+    .timeline {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .timeline-item {
+        position: relative;
+        padding: 10px 0 30px 40px; /* Espace pour l'icône et la ligne */
+        border-left: 2px solid #e9ecef;
+    }
+    /* Enlever la ligne du dernier élément */
+    .timeline-item:last-child {
+        border-left: none;
+    }
+    .timeline-item:last-child::before {
+        height: 0;
+    }
+    /* Trait vertical continu */
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -2px;
+        top: 15px;
+        bottom: 0;
+        width: 2px;
+        background-color: #e9ecef;
+    }
+    .timeline-icon {
+        position: absolute;
+        left: -16px; /* (Icon width / 2) + (Border width / 2) */
+        top: 5px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #FF7900;
+        border: 2px solid #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        z-index: 1;
+    }
+    .timeline-content {
+        background-color: #fff;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e9ecef;
+    }
+    .anomaly-detail-item {
+        display: block;
+        font-size: 0.9em;
+        padding-left: 1rem;
+        border-left: 3px solid #e9ecef;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="page-header">
+        <h1 class="page-title h2">Historique des Communications de l'Équipe</h1>
+        <a href="{% url 'managers:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Retour au Dashboard
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if emails %}
+                <ul class="timeline">
+                    {% for email in emails %}
+                    <li class="timeline-item">
+                        <div class="timeline-icon">
+                            <i class="fas fa-envelope-open-text"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h5 class="fw-bold mb-1">
+                                Notification envoyée à {{ email.collaborator.prenom }} {{ email.collaborator.nom }}
+                            </h5>
+                            <small class="text-muted d-block mb-3">
+                                <i class="far fa-calendar-alt me-1"></i> Le {{ email.created_at|date:"d F Y" }} 
+                                <i class="far fa-clock ms-2 me-1"></i> à {{ email.created_at|date:"H:i" }}
+                            </small>
+                            
+                            <p class="mb-1"><strong>Anomalies concernées pour le pointage du {{ email.pointage.date|date:"d/m/Y" }}:</strong></p>
+                            
+                            {% for anomalie in email.pointage.anomalies.all %}
+                                <div class="anomaly-detail-item">
+                                    <strong>{{ anomalie.get_type_display }}:</strong> {{ anomalie.detail }}
+                                </div>
+                            {% empty %}
+                                <div class="text-muted small mt-2">Détails des anomalies non disponibles.</div>
+                            {% endfor %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center text-muted py-5">
+                    <h4><i class="fas fa-check-circle text-success mb-3" style="font-size: 2rem;"></i></h4>
+                    <h4>Aucun e-mail à afficher</h4>
+                    <p class="mb-0">L'historique des communications pour votre équipe est vide.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

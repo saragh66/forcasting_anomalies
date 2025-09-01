@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport des Anomalies de Pointage</title>
+    <style>
+        /* Définition de la page et des polices */
+        @page {
+            size: A4 landscape; /* Format paysage pour mieux accueillir le tableau */
+            margin: 1.5cm;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 9pt;
+            color: #333333;
+        }
+
+        /* En-tête du document */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #FF7900;
+            padding-bottom: 10px;
+        }
+        .header img {
+            width: 120px;
+            margin-bottom: 10px;
+        }
+        
+        /* Titre principal */
+        h1 {
+            font-size: 22pt;
+            font-weight: 300;
+            color: #333;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        /* Informations sur la génération */
+        .meta-info {
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+            margin-bottom: 25px;
+        }
+        
+        /* Note d'avertissement si le rapport est limité */
+        .limit-note {
+            background-color: #fffbe6;
+            border: 1px solid #ffe58f;
+            color: #8a6d3b;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 8pt;
+            border-radius: 4px;
+        }
+
+        /* Style du tableau */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top; /* Pour un meilleur alignement si les détails sont longs */
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            font-size: 8.5pt;
+        }
+        
+        /* Style des détails d'anomalies dans les cellules */
+        .anomaly-detail {
+            display: block;
+            margin-bottom: 4px;
+        }
+        .anomaly-detail:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Pied de page */
+        .footer {
+            position: fixed;
+            bottom: -1cm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8pt;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo Orange">
+    </div>
+    
+    <h1>Rapport des Anomalies de Pointage</h1>
+    <div class="meta-info">
+        Généré le : {% now "d/m/Y à H:i" %}
+    </div>
+
+    {% if is_limited %}
+        <div class="limit-note">
+            <strong>Attention :</strong> Ce rapport a été limité aux <strong>{{ limit }}</strong> anomalies les plus récentes correspondant à vos filtres. 
+            Un total de <strong>{{ total_results }}</strong> anomalies ont été trouvées.
+        </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Matricule</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Date</th>
+                <th>Département</th>
+                <th>Direction</th>
+                <th>Détails des Anomalies</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pointage in pointages %}
+            <tr>
+                <td>{{ pointage.collaborateur.matricule }}</td>
+                <td>{{ pointage.collaborateur.nom }}</td>
+                <td>{{ pointage.collaborateur.prenom }}</td>
+                <td>{{ pointage.date|date:"d/m/Y" }}</td>
+                <td>{{ pointage.collaborateur.departement.nom|default:"N/A" }}</td>
+                <td>{{ pointage.collaborateur.direction.nom|default:"N/A" }}</td>
+                <td>
+                    {% for anomalie in pointage.anomalies.all %}
+                    <span class="anomaly-detail"><strong>{{ anomalie.get_type_display }}:</strong> {{ anomalie.detail }}</span>
+                    {% endfor %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 20px;">
+                    Aucune anomalie trouvée pour les filtres sélectionnés.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        Page <span class="page-number"></span> / <span class="total-pages"></span> - Rapport confidentiel
+    </div>
+</body>
+</html>

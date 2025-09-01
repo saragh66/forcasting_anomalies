@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification d'anomalies de pointage</title>
+    <style>
+        /* Styles pour un rendu professionnel sur la plupart des clients email */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333333;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #dddddd;
+        }
+        .email-header {
+            background-color: #FF7900; /* Couleur signature Orange */
+            color: #ffffff;
+            padding: 24px;
+            text-align: left;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 500;
+        }
+        .email-header p {
+            margin: 4px 0 0;
+            font-size: 15px;
+            opacity: 0.9;
+        }
+        .email-body {
+            padding: 32px;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+        .email-body p {
+            margin: 0 0 16px;
+        }
+        .anomaly-box {
+            background-color: #FFF5EC; /* Orange très clair */
+            border-left: 5px solid #FF7900; /* Bordure orange plus épaisse */
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 6px;
+        }
+        .anomaly-box strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #333333;
+        }
+        .footer {
+            padding: 24px;
+            text-align: center;
+        }
+        .footer-logo {
+            width: 80px; /* Taille du logo */
+            margin-bottom: 16px;
+        }
+        .footer-text {
+            font-size: 12px;
+            color: #888888;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>Anomalies de pointage - {{ pointage.date|date:"j F Y" }}</h1>
+            <p>Destinataire : {{ collaborateur.prenom }} {{ collaborateur.nom }}</p>
+        </div>
+        <div class="email-body">
+            <p>Bonjour {{ collaborateur.prenom }},</p>
+            <p>
+                Nous vous contactons pour vous informer que les anomalies suivantes ont été constatées concernant votre pointage du <strong>{{ pointage.date|date:"d/m/Y" }}</strong> :
+            </p>
+
+            {% for anomalie in anomalies %}
+            <div class="anomaly-box">
+                <strong>{{ anomalie.get_type_display }}</strong>
+                {{ anomalie.detail }}
+            </div>
+            {% empty %}
+            <div class="anomaly-box">
+                Aucune anomalie spécifique n'a été détaillée.
+            </div>
+            {% endfor %}
+
+            <p>
+                Pour toute question ou pour régulariser votre situation, nous vous invitons à vous rapprocher de votre manager.
+            </p>
+            <p>
+                Cordialement,
+                <br>
+                <strong>Le Service des Ressources Humaines</strong>
+            </p>
+        </div>
+        <div class="footer">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/1200px-Orange_logo.svg.png" alt="Logo Orange Maroc" class="footer-logo">
+            <p class="footer-text">
+                Cet e-mail est généré automatiquement par la Plateforme RH. Merci de ne pas y répondre directement.<br>
+                Orange Maroc &copy; {% now "Y" %}
+            </p>
+        </div>
+    </div>
+</body>
+</html>

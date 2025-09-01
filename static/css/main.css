@@ -1,0 +1,66 @@
+:root {
+  --orange-light: #f9a825;
+  --orange:       #ff7900;
+  --orange-dark:  #e56d00;
+  --text-dark:    #222;
+  --bg-page:      #fff;
+  --shadow:       rgba(0,0,0,0.1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, var(--orange-light), var(--orange-dark));
+  color: var(--text-dark);
+}
+
+/* === NAVBAR PROTÉGÉE === */
+.navbar {
+  background: var(--orange);
+  padding: .5rem 1rem;
+  box-shadow: 0 4px 12px var(--shadow);
+  position: sticky; top:0; z-index:100;
+}
+.navbar .container {
+  display: flex; align-items:center; justify-content:space-between;
+}
+.brand {
+  display:flex; align-items:center; text-decoration:none;
+}
+.brand img { height:40px; margin-right:.5rem; }
+.brand span {
+  font-size:1.25rem; font-weight:bold; color:#fff;
+}
+.nav-links a {
+  margin-left:1rem; color:#fff; text-decoration:none; font-weight:500;
+  transition: background .2s;
+  padding:.25rem .5rem;
+}
+.nav-links a:hover { background:rgba(255,255,255,0.2); border-radius:4px; }
+.nav-links .logout {
+  background:#fff; color:var(--orange); padding:.25rem .75rem; border-radius:4px;
+  margin-left:1.5rem; font-weight:600;
+}
+.nav-links .logout:hover { background:#f4f4f4; }
+
+/* === CONTENU PROTÉGÉ === */
+.page-content {
+  background: var(--bg-page);
+  padding:2rem; margin:1.5rem auto;
+  border-radius:8px; max-width:960px;
+  box-shadow:0 8px 24px var(--shadow);
+}
+
+/* === PUBLIC PAGES === */
+.public-page {
+  /* landing + login */
+}
+
+/* === UTILES === */
+.btn-action {
+  background: var(--orange);
+  color:#fff; padding:.6rem 1.2rem; border:none;
+  border-radius:4px; cursor:pointer;
+  transition: background .2s;
+}
+.btn-action:hover { background: var(--orange-dark); }
+.file-input { margin-bottom:1rem; }

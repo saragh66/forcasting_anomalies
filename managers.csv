@@ -1,0 +1,10 @@
+direction_nom,departement_nom,manager_email
+Corporate,Marketing,manager.marketing@orange.com
+Corporate,Finance,manager.finance@orange.com
+Corporate,RH,manager.rh@orange.com
+Tech,Data & IA,manager.data@orange.com
+Tech,Cloud,manager.cloud@orange.com
+Tech,Cybersécurité,manager.cyber@orange.com
+Telecom,Réseaux Fixes,manager.reseaux@orange.com
+Telecom,Réseaux Mobiles,manager.mobile@orange.com
+Telecom,Support Technique,manager.support@orange.com

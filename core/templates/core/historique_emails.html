@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Historique des Emails - Orange RH{% endblock %}
+
+{% block extra_css %}
+    <style>
+        body { background-color: #f0f2f5; }
+        .navbar-custom { background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,.05); padding: 1rem 1.5rem; }
+        .navbar-brand img { height: 40px; }
+        .nav-link { color: #343a40 !important; }
+        .nav-link.active { font-weight: bold; color: #FF7900 !important; }
+        .card { border: none; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; }
+        .card-header { font-weight: 300; font-size: 1.75rem; background-color: #f8f9fa; padding: 1.5rem; border-bottom: 1px solid #dee2e6; color: #343a40; }
+        .btn-orange { background-color: #FF7900; color: white; border: none; transition: background-color 0.3s ease; }
+        .btn-orange:hover { background-color: #d96800; color: white; }
+        .table th { font-weight: 500; background-color: #e9ecef; color: #495057; border-bottom: 2px solid #dee2e6; }
+        .table td { vertical-align: middle; }
+        .filters-form { background-color: #ffffff; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .filter-inputs > div { display: none; }
+        .filter-inputs > div.active { display: block; }
+        .form-check-label { color: #495057; }
+        .pagination .page-item.disabled .page-link { color: #6c757d; background-color: #e9ecef; border-color: #dee2e6; }
+        .pagination .page-item .page-link { color: #FF7900; }
+        .pagination .page-item.active .page-link { background-color: #FF7900; border-color: #FF7900; color: white; }
+        .anomaly-detail-item { display: block; margin-bottom: 0.25rem; font-size: 0.9em; }
+    </style>
+{% endblock %}
+
+{# Ce bloc vide va cacher les messages de notification sur cette page #}
+{% block messages %}{% endblock messages %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-custom mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'core:rh_dashboard' %}">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo Orange">
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
+                <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'core:historique_emails' %}">Historique</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+            </ul>
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Déconnexion</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container-fluid p-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-history me-2"></i>Historique des E-mails Envoyés</span>
+            <a href="{% url 'core:export_email_pdf' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-orange">
+                <i class="fas fa-download me-2"></i>Exporter en PDF
+            </a>
+        </div>
+        <div class="card-body">
+            <form method="get" class="filters-form">
+                <div class="row align-items-end g-3">
+                    <div class="col-md-6">
+                        <strong class="me-3 d-block mb-2">Filtrer par :</strong>
+                        {% for value, text in modes.items %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="mode" id="mode_{{ value }}" value="{{ value }}" {% if filters.mode == value or not filters.mode and value == 'email' %}checked{% endif %}>
+                            <label class="form-check-label" for="mode_{{ value }}">{{ text }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group filter-inputs">
+                            <div id="text-input-wrapper" class="w-100">
+                                <input type="text" name="q" value="{{ filters.q|default:'' }}" class="form-control" placeholder="Rechercher par email ou matricule...">
+                            </div>
+                            <div id="date-input-wrapper" class="w-100">
+                                <input type="date" name="date" value="{{ filters.date|default:'' }}" class="form-control">
+                            </div>
+                            <div id="week-input-wrapper" class="w-100">
+                                <input type="week" name="week" value="{{ filters.week|default:'' }}" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12 text-end">
+                        <a href="{% url 'core:historique_emails' %}" class="btn btn-secondary me-2">Réinitialiser les filtres</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-2"></i>Appliquer les filtres</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Matricule</th>
+                            <th>Collaborateur</th>
+                            <th>Manager (CC)</th>
+                            <th>Détails des Anomalies</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for email in page_obj %}
+                            <tr>
+                                <td>{{ email.created_at|date:"d/m/Y H:i" }}</td>
+                                <td><b>{{ email.collaborator.matricule|default:"N/A" }}</b></td>
+                                <td>
+                                    {{ email.collaborator.prenom }} {{ email.collaborator.nom }}
+                                    <br><small class="text-muted">{{ email.to_email }}</small>
+                                </td>
+                                <td>
+                                    {{ email.cc_manager|default:"-" }}
+                                </td>
+                                <td>
+                                    {% if email.pointage and email.pointage.anomalies.all %}
+                                        {% for anomalie in email.pointage.anomalies.all %}
+                                            <span class="anomaly-detail-item"><strong>{{ anomalie.get_type_display }}:</strong> {{ anomalie.detail }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ email.subject }} {# Fallback au cas où le lien n'existerait pas #}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted p-4">Aucun email trouvé pour les filtres sélectionnés.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <nav class="mt-4">
+            {% if page_obj.has_other_pages %}
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">‹ Précédent</a></li>
+                    {% endif %}
+                    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Suivant ›</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modeRadios = document.querySelectorAll('input[name="mode"]');
+        const textInputWrapper = document.getElementById('text-input-wrapper');
+        const dateInputWrapper = document.getElementById('date-input-wrapper');
+        const weekInputWrapper = document.getElementById('week-input-wrapper');
+
+        function toggleInputs() {
+            const selectedMode = document.querySelector('input[name="mode"]:checked').value;
+            textInputWrapper.classList.remove('active');
+            dateInputWrapper.classList.remove('active');
+            weekInputWrapper.classList.remove('active');
+
+            if (selectedMode === 'email' || selectedMode === 'matricule') {
+                textInputWrapper.classList.add('active');
+            } else if (selectedMode === 'date') {
+                dateInputWrapper.classList.add('active');
+            } else if (selectedMode === 'week') {
+                weekInputWrapper.classList.add('active');
+            }
+        }
+        modeRadios.forEach(radio => radio.addEventListener('change', toggleInputs));
+        toggleInputs();
+    });
+    </script>
+{% endblock %}

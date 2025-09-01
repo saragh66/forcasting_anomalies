@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Mon Équipe{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --orange-primary: #FF7900;
+        --blue-primary: #0d6efd;
+        --red-primary: #dc3545;
+        --green-primary: #198754;
+    }
+    body { background-color: #f4f5f7; }
+
+    /* --- Styles pour la Navbar (au cas où elle serait ici) --- */
+    .navbar-custom { background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+    .nav-link.active { color: var(--orange-primary) !important; font-weight: 600; border-bottom: 2px solid var(--orange-primary); }
+    
+    /* --- Styles pour le Dashboard --- */
+    .page-title { font-weight: 300; }
+    .kpi-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        border: 1px solid #e9ecef;
+    }
+    .kpi-icon {
+        font-size: 1.8rem; width: 60px; height: 60px;
+        border-radius: 50%; margin-right: 1rem;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .kpi-icon.blue { background-color: #e3f2fd; color: var(--blue-primary); }
+    .kpi-icon.red { background-color: #ffebee; color: var(--red-primary); }
+    .kpi-icon.green { background-color: #e8f5e9; color: var(--green-primary); }
+    .kpi-info .value { font-size: 2.2rem; font-weight: 700; }
+    .kpi-info .label { font-size: 0.9rem; color: #6c757d; }
+    
+    .content-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+        border: 1px solid #e9ecef;
+        padding: 1.5rem;
+    }
+    .table-borderless > :not(caption) > * > * { border-bottom-width: 0; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title h2">Dashboard de Mon Équipe</h1>
+    <div>
+        <a href="{% url 'managers:team_anomalies' %}" class="btn btn-outline-primary">Voir les Anomalies</a>
+        <a href="{% url 'managers:team_email_history' %}" class="btn btn-outline-secondary">Voir l'Historique</a>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon blue"><i class="fas fa-users"></i></div>
+            <div class="kpi-info"><div class="value">{{ stats.total_collaborateurs }}</div><div class="label">Collaborateurs</div></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="kpi-info"><div class="value">{{ stats.collab_avec_anomalie }}</div><div class="label">Avec Anomalies</div></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon green"><i class="fas fa-check-circle"></i></div>
+            <div class="kpi-info"><div class="value">{{ stats.collab_sans_anomalie }}</div><div class="label">Sans Anomalie</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODIFIÉ : Réorganisation du Graphique et du Tableau -->
+<div class="row g-4">
+    <!-- Colonne de gauche : Graphique -->
+    <div class="col-lg-7">
+        <div class="content-card">
+            <h5 class="card-title mb-3">Anomalies par Collaborateur</h5>
+            <div style="position: relative; height:350px; width:100%">
+                {% if collaborateurs_json %}<canvas id="anomalieChart"></canvas>{% else %}<p class="text-muted text-center pt-5">Aucune donnée pour le graphique.</p>{% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Colonne de droite : Tableau de Statut -->
+    <div class="col-lg-5">
+        <div class="content-card">
+            <h5 class="card-title mb-3">Statut des Collaborateurs</h5>
+            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                <table class="table table-borderless table-hover">
+                    <tbody>
+                        {% for collab in collaborateurs_table %}
+                        <tr>
+                            <td>{{ collab.prenom }} {{ collab.nom }}</td>
+                            <td class="text-end">
+                                {% if collab.total_anomalies > 0 %}
+                                    <span class="badge rounded-pill text-bg-danger">{{ collab.total_anomalies }} anomalie(s)</span>
+                                {% else %}
+                                    <span class="badge rounded-pill text-bg-success">OK</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="text-muted text-center p-4">Aucun collaborateur dans votre équipe.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ collaborateurs_json|json_script:"collaborateurs-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const collaborateursDataElement = document.getElementById('collaborateurs-data');
+    if (!collaborateursDataElement) return;
+
+    const collaborateursData = JSON.parse(collaborateursDataElement.textContent);
+    const canvas = document.getElementById("anomalieChart");
+
+    if (!canvas || collaborateursData.length === 0) return;
+
+    const labels = collaborateursData.map(c => `${c.prenom} ${c.nom}`);
+    const dataValues = collaborateursData.map(c => c.total_anomalies);
+
+    new Chart(canvas.getContext("2d"), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Nombre d'anomalies",
+                data: dataValues,
+                backgroundColor: 'rgba(255, 121, 0, 0.7)',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

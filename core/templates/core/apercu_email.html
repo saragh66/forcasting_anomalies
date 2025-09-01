@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Aperçu Email - {{ pointage.collaborateur.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .navbar-custom { background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+    .navbar-brand img { height: 28px; }
+    .content-wrapper { max-width: 900px; margin: auto; }
+    .email-card { border: none; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .email-header { background-color: var(--orange-primary); color: white; padding: 1.5rem; border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem; }
+    .email-body { padding: 2rem; font-size: 1.1rem; line-height: 1.6; }
+    .anomalies-list { list-style: none; padding-left: 0; }
+    .anomalies-list li { background-color: #fff5ee; border-left: 4px solid var(--orange-primary); padding: 0.75rem 1.25rem; margin-bottom: 0.5rem; border-radius: 0.25rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'core:rh_dashboard' %}">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo">
+            <span class="ms-2 fw-bold align-middle">Plateforme RH</span>
+        </a>
+    </div>
+</nav>
+
+<div class="container-fluid p-4">
+<div class="content-wrapper">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3" style="font-weight: 300;">Aperçu de l'email</h1>
+        <div>
+            <a href="{% url 'core:liste_anomalies' %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i> Retour à la liste</a>
+            <a href="{% url 'core:historique_emails' %}" class="btn btn-outline-dark"><i class="fas fa-history me-2"></i> Voir l'Historique</a>
+        </div>
+    </div>
+
+    <!-- Carte de l'Email -->
+    <div class="card email-card">
+        <div class="email-header">
+            <h5 class="mb-1">Anomalies de pointage - {{ pointage.date|date:"d F Y" }}</h5>
+            <p class="mb-0 small">Destinataire : {{ pointage.collaborateur.prenom }} {{ pointage.collaborateur.nom }}</p>
+        </div>
+        <div class="email-body">
+            <p>Bonjour {{ pointage.collaborateur.prenom }},</p>
+            <p>Nous avons constaté les anomalies suivantes concernant votre pointage du <strong>{{ pointage.date|date:"d/m/Y" }}</strong> :</p>
+            <ul class="anomalies-list my-4">
+                {% for anomalie in pointage.anomalies.all %}
+                    <li><strong>{{ anomalie.get_type_display }}:</strong> {{ anomalie.detail }}</li>
+                {% endfor %}
+            </ul>
+            <p>Nous vous remercions de bien vouloir vous rapprocher de votre manager pour clarifier ces points.</p>
+            <p>Cordialement,<br>Le Service des Ressources Humaines</p>
+        </div>
+    </div>
+    
+    <!-- Bouton d'action CORRIGÉ -->
+    <div class="text-end mt-4">
+        <!-- Le lien pointe maintenant vers la bonne URL et passe l'ID du pointage -->
+        <a href="{% url 'core:send_single_email' pointage.id %}" class="btn btn-orange btn-lg px-4 py-2">
+            <i class="fas fa-paper-plane me-2"></i> Confirmer et Envoyer
+        </a>
+    </div>
+</div>
+</div>
+{% endblock %}

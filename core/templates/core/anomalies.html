@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Anomalies de Pointage - Orange{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --orange-primary: #FF7900;
+        --orange-dark: #d96800;
+        --green-primary: #198754;
+    }
+    body { background-color: #f8f9fa; }
+    .navbar-custom { background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+    .navbar-brand img { height: 28px; }
+    .nav-link { color: #343a40; font-weight: 500; }
+    .nav-link.active { color: var(--orange-primary); font-weight: 600; border-bottom: 2px solid var(--orange-primary); }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .page-title { font-weight: 300; margin-bottom: 0; }
+    .actions-group .btn, .actions-group form { margin-left: 0.5rem; }
+    
+    .card { border: none; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .card-header { background-color: transparent; border-bottom: 1px solid #e9ecef; font-weight: 600; padding: 1rem 1.5rem; }
+    .table thead th { background-color: #f1f3f5; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; }
+    .anomalie-detail { display: block; margin-bottom: 0.25rem; }
+    
+    .btn-orange { background-color: var(--orange-primary); border-color: var(--orange-primary); color: white; }
+    .btn-orange:hover { background-color: var(--orange-dark); border-color: var(--orange-dark); }
+    .btn-green { background-color: var(--green-primary); border-color: var(--green-primary); color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Barre de Navigation Supérieure -->
+<nav class="navbar navbar-expand-lg navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'core:rh_dashboard' %}">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo">
+            <span class="ms-2 fw-bold align-middle">Plateforme RH</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:rh_dashboard' %}active{% endif %}" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:liste_anomalies' %}active{% endif %}" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:historique_emails' %}active{% endif %}" href="{% url 'core:historique_emails' %}">Historique</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:statistiques_view' %}active{% endif %}" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.namespace == 'analytics' %}active{% endif %}" href="{% url 'analytics:dashboard' %}">Analyse Prédictive</a></li>
+            </ul>
+            
+            <!-- MODIFIÉ : Ajout du formulaire de déconnexion -->
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <li class="nav-item">
+                    <form id="logout-form" method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">
+                            Déconnexion
+                        </button>
+                    </form>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container-fluid p-4">
+    <div class="page-header">
+        <h1 class="page-title h2">Anomalies de Pointage</h1>
+        
+        <div class="actions-group d-flex">
+            <a href="{% url 'core:export_anomalies_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary">
+                <i class="fas fa-download me-2"></i> Exporter en PDF
+            </a>
+            
+            <form action="{% url 'core:send_pending_emails' %}?{{ request.GET.urlencode }}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-green" 
+                        onclick="return confirm('Êtes-vous sûr de vouloir envoyer un e-mail pour toutes les anomalies non notifiées de cette sélection ?');">
+                    <i class="fas fa-paper-plane me-2"></i> Envoyer les notifications
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🔍 Zone de filtres -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <a class="text-decoration-none text-dark fw-bold" data-bs-toggle="collapse" href="#filtersCollapse" role="button" aria-expanded="true">
+                <i class="fas fa-filter me-2" style="color: var(--orange-primary);"></i> Filtres
+            </a>
+        </div>
+        <div class="collapse show" id="filtersCollapse">
+            <div class="card-body">
+                <form class="row g-3 align-items-end" method="get">
+                    <div class="col-md-4 col-lg-2"><label class="form-label">Du</label><input type="date" name="start" value="{{ filters.start|default:'' }}" class="form-control"></div>
+                    <div class="col-md-4 col-lg-2"><label class="form-label">Au</label><input type="date" name="end" value="{{ filters.end|default:'' }}" class="form-control"></div>
+                    <div class="col-md-4 col-lg-2"><label class="form-label">Matricule</label><input type="text" name="matricule" value="{{ filters.matricule|default:'' }}" class="form-control" placeholder="Ex: M12345"></div>
+                    <div class="col-md-4 col-lg-3"><label class="form-label">Type d'anomalie</label><select name="type" class="form-select"><option value="">Tous les types</option>{% for code, label in anomalie_types %}<option value="{{ code }}" {% if filters.type == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+                    <div class="col-md-4 col-lg-3"><label class="form-label">Direction</label><select name="direction" class="form-select"><option value="">Toutes</option>{% for d in directions %}<option value="{{ d.id }}" {% if filters.direction == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nom }}</option>{% endfor %}</select></div>
+                    <div class="col-md-4 col-lg-3"><label class="form-label">Département</label><select name="departement" class="form-select"><option value="">Tous</option>{% for dp in departements %}<option value="{{ dp.id }}" {% if filters.departement == dp.id|stringformat:"s" %}selected{% endif %}>{{ dp.nom }}</option>{% endfor %}</select></div>
+                    <div class="col-md-8 col-lg-5"><label class="form-label">Recherche libre</label><input type="text" name="q" value="{{ filters.q|default:'' }}" class="form-control" placeholder="Nom, prénom, détail..."></div>
+                    <div class="col-md-12 col-lg-4 d-flex"><button type="submit" class="btn btn-orange me-2 flex-grow-1"><i class="fas fa-search me-2"></i>Filtrer</button><a href="{% url 'core:liste_anomalies' %}" class="btn btn-outline-secondary flex-grow-1"><i class="fas fa-times me-2"></i>Reset</a></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📋 Tableau des anomalies -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Matricule</th><th>Nom</th><th>Prénom</th><th>Date</th><th>Département</th><th>Direction</th><th>Détails des Anomalies</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pointage in pointages %}
+                        <tr>
+                            <td class="ps-4">{{ pointage.collaborateur.matricule }}</td>
+                            <td>{{ pointage.collaborateur.nom }}</td>
+                            <td>{{ pointage.collaborateur.prenom }}</td>
+                            <td>{{ pointage.date|date:"d/m/Y" }}</td>
+                            <td>{{ pointage.collaborateur.departement.nom|default:"N/A" }}</td>
+                            <td>{{ pointage.collaborateur.direction.nom|default:"N/A" }}</td>
+                            <td>
+                                {% for anomalie in pointage.anomalies.all %}
+                                    <span class="anomalie-detail">
+                                        <span class="fw-bold">{{ anomalie.get_type_display }}:</span> 
+                                        {{ anomalie.detail }}
+                                    </span>
+                                {% endfor %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'core:apercu_email' pointage.id %}" class="btn btn-sm btn-outline-secondary" title="Aperçu de l'email">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <h4>Aucune anomalie à afficher</h4>
+                                <p class="mb-0">Ajustez vos filtres ou importez un nouveau fichier pour voir des résultats.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+{% endblock %}
