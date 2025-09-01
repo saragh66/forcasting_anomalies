@@ -106,5 +106,5 @@ Ce projet vise à développer une solution complète pour la valorisation des do
 
 **[Votre Nom Complet]** - Data Scientist (Stagiaire)
 *   **Département :** Data & IA, Orange Maroc
-*   **Email :** votre.email@orange.com
-*   **LinkedIn :** [Votre profil LinkedIn](https://www.linkedin.com/in/votre-profil/)
+*   **Email :**  saraelghayati726@gmail.com
+*   **LinkedIn :** https://github.com/saragh66/forcasting_anomalies
