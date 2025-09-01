@@ -104,7 +104,7 @@ Ce projet vise à développer une solution complète pour la valorisation des do
 
 ## 5. Auteur
 
-**[Votre Nom Complet]** - Data Scientist (Stagiaire)
+**[Sara elghayati]** - Data Scientist (Stagiaire)
 *   **Département :** Data & IA, Orange Maroc
 *   **Email :**  saraelghayati726@gmail.com
 *   **LinkedIn :** https://github.com/saragh66/forcasting_anomalies
