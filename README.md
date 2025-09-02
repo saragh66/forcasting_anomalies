@@ -1,110 +1,104 @@
-# Plateforme d'Analyse et de Prédiction des Anomalies RH
 
-**Projet réalisé dans le cadre de mon stage en tant que Data Scientist au sein du département Data & IA d'Orange Maroc.**
+# **RH-Predict: Human Resources Intelligence & Forecasting Engine**
 
-## 1. Contexte et Objectif
-
-Ce projet vise à développer une solution complète pour la valorisation des données de pointage des collaborateurs. L'objectif est de passer d'un simple suivi manuel à une plateforme intelligente capable de :
-- **Ingérer et traiter** des volumes importants de données brutes.
-- **Détecter automatiquement** les anomalies de présence (retards, absences, etc.).
-- **Fournir des dashboards** analytiques pour les équipes RH et les managers.
-- **Implémenter un modèle prédictif** pour anticiper les tendances futures et permettre une gestion proactive des ressources humaines.
-
-![Aperçu du Dashboard RH](https://i.imgur.com/your-screenshot-link.png)
-*(Pensez à remplacer ce lien par une capture d'écran de votre dashboard principal)*
+**An end-to-end Business Intelligence and Machine Learning solution engineered to convert raw time-tracking data into strategic, predictive insights. This project was developed within the Data & AI department at Orange Morocco, showcasing a production-ready approach to proactive human resources management.**
 
 ---
 
-## 2. Fonctionnalités Clés
+## Executive Summary: From Reactive Reporting to Predictive Strategy
 
--   **Pipeline ETL Asynchrone :** Import de fichiers CSV lourds en arrière-plan sans bloquer l'interface, grâce à une architecture robuste avec **Celery & Redis**.
--   **Dashboards Analytiques :** Visualisation des KPIs clés, répartition des anomalies par direction et département via des graphiques interactifs avec **Chart.js**.
--   **Analyse de Performance :** Suivi des tendances d'anomalies (hausse/baisse) sur des périodes définies.
--   **Modélisation Prédictive :** Utilisation de la bibliothèque **Prophet** pour prévoir le nombre futur d'anomalies à un niveau global, par direction ou par département.
--   **Espace Manager Sécurisé :** Portail dédié où chaque manager a une vue filtrée et sécurisée sur les performances et l'historique de sa propre équipe.
--   **Export de Rapports :** Génération de synthèses en **PDF** à la volée avec **WeasyPrint**.
--   **Déploiement Conteneurisé :** L'ensemble de l'application et de ses services (Django, MySQL, Redis, Celery) est conteneurisé avec **Docker** pour un déploiement et une portabilité simplifiés.
+The core vision of RH-Predict is to architect an analytical nervous system for HR operations. The platform moves beyond historical reporting to address critical business questions: How do we automate the entire data lifecycle, from ingestion to strategic insight? How do we empower field managers with secure, relevant, and real-time data? Crucially, how do we transition from a reactive management model to a **predictive framework** that anticipates future workforce trends?
+
+This platform is the answer.
+
+## Core Architecture & Key Capabilities
+
+RH-Predict is built on an enterprise-grade, containerized architecture designed for performance, scalability, and a frictionless user experience.
+
+-   ### **High-Throughput Asynchronous ETL Pipeline**
+    Large-scale CSV data ingestion is handled in the background by a distributed task queue powered by **Celery & Redis**. This non-blocking architecture ensures the user interface remains responsive and fluid, regardless of the data volume being processed.
+
+-   ### **Multi-Layered Analytical Dashboards**
+    Dynamic, interactive data visualizations built with **Chart.js** provide insights across all organizational levels. The system allows for drilling down from a global, company-wide overview to granular performance metrics for a specific department or individual.
+
+-   ### **Temporal Forecasting Engine**
+    At the heart of the platform lies a machine learning model leveraging **Facebook's Prophet** library. It performs time-series analysis to accurately forecast future anomaly trends, enabling the organization to shift from asking "What happened?" to "**What will happen?**"
+
+-   ### **Zero-Trust Secure Manager Portal**
+    A dedicated, authenticated portal where managers access data exclusively pertaining to their own teams. Security and data segregation are enforced at the database query level, guaranteeing strict confidentiality and need-to-know access.
+
+-   ### **On-the-Fly PDF Report Generation**
+    Any filtered data view can be instantly exported into a professional, presentation-ready **PDF** report, rendered server-side with **WeasyPrint**.
+
+-   ### **Containerized & Portable Infrastructure**
+    The entire application stack—including the Django backend, Celery workers, Redis message broker, and MySQL database—is containerized with **Docker** and orchestrated via Docker Compose. This ensures perfect environmental parity, one-command deployment, and seamless portability across systems.
 
 ---
 
-## 3. Stack Technologique
+## Technology Stack
 
-| Catégorie | Technologie | Rôle |
+The platform is engineered using a modern, robust, and scalable technology stack selected for enterprise reliability.
+
+| Domain | Technology | Rationale & Strategic Role |
 | :--- | :--- | :--- |
-| **Backend** | Django, Django REST Framework | Framework web, gestion des modèles et de la logique métier. |
-| **Frontend** | HTML, CSS, JavaScript, Bootstrap | Interface utilisateur et graphiques interactifs. |
-| **Tâches Asynchrones**| Celery, Redis | Traitement en arrière-plan des imports ETL et de l'envoi d'e-mails. |
-| **Base de Données** | MySQL | Stockage des données relationnelles. |
-| **Analyse & Prédiction** | Pandas, Prophet | Manipulation des données, analyse de séries temporelles et prédiction. |
-| **Déploiement** | Docker, Docker Compose | Conteneurisation et orchestration des services. |
+| **Application Core (Backend)** | **Django** & **Django REST Framework** | A secure, battle-tested Python framework for building complex, data-driven applications. |
+| **User Experience (Frontend)** | **HTML5, CSS3, JavaScript** & **Bootstrap** | For creating clean, responsive, and intuitive user interfaces. |
+| **Asynchronous Engine**| **Celery** & **Redis** | The industry standard for distributed task processing and high-performance message brokering in the Python ecosystem. |
+| **Data Persistence** | **MySQL** | A proven, reliable relational database management system capable of handling millions of records. |
+| **AI & Data Science** | **Pandas** & **Prophet (by Meta)** | For best-in-class data manipulation and state-of-the-art time-series forecasting. |
+| **Infrastructure** | **Docker** & **Docker Compose** | Infrastructure-as-Code for reproducible, isolated, and scalable deployments. |
 
 ---
 
-## 4. Guide de Démarrage Rapide
+## Quick Start Guide: Deployment in a Single Command
 
-### Prérequis
+### Prerequisites
 -   Docker
 -   Docker Compose
 
 ### Instructions
 
-1.  **Cloner le dépôt :**
+1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/VOTRE_NOM/VOTRE_DEPOT.git
-    cd VOTRE_NOM_DE_DEPOT
+    git clone https://github.com/saragh66/forcasting_anomalies.git
+    cd forcasting_anomalies
     ```
 
-2.  **Configurer l'environnement :**
-    Créez un fichier nommé `.env` à la racine du projet et remplissez-le en utilisant ce modèle.
-    ```env
-    # Fichier .env
-    SECRET_KEY=votre_cle_secrete_django
-    DEBUG=1
-    ALLOWED_HOSTS=127.0.0.1,localhost
-    
-    # Base de Données (pour Docker)
-    DB_NAME=plateforme_rh
-    DB_USER=rh_user
-    DB_PASSWORD=your_strong_password
-    DB_HOST=db
-    DB_PORT=3306
-    
-    # Email (exemple avec Gmail)
-    EMAIL_HOST=smtp.gmail.com
-    EMAIL_PORT=587
-    EMAIL_HOST_USER=votre_email@gmail.com
-    EMAIL_HOST_PASSWORD=votre_mot_de_passe_application_gmail
-    
-    # Redis (pour Docker)
-    CELERY_BROKER_URL=redis://redis:6379/0
-    CELERY_RESULT_BACKEND=redis://redis:6379/0
+2.  **Configure the Environment:**
+    Create a `.env` file from the provided template and populate it with your credentials.
+    ```bash
+    # Create the .env file
+    cp env.example .env
+    # Now, edit the .env file with your specific secrets
     ```
 
-3.  **Lancer l'application avec Docker Compose :**
-    Cette commande va construire les images et démarrer tous les conteneurs.
+3.  **Launch the System:**
+    This command builds the container images and orchestrates the launch of the entire service ecosystem.
     ```bash
     docker-compose up --build
     ```
 
-4.  **Accéder à l'application :**
-    Ouvrez votre navigateur et allez sur `http://127.0.0.1:8000`.
+4.  **Access the Platform:**
+    Navigate to `http://127.0.0.1:8000` in your web browser.
 
-5.  **(Première fois uniquement) Créer les comptes :**
-    Ouvrez un **nouveau terminal** et lancez ces commandes :
-    -   **Créer un superutilisateur (admin) :**
+5.  **(First Time Only) Seed the Database:**
+    Open a **new terminal** to execute database initialization commands.
+    -   **Create a Superuser:**
         ```bash
         docker-compose exec web python manage.py createsuperuser
         ```
-    -   **Créer les comptes Managers :**
+    -   **Populate with Initial Data:** *(It is recommended to place seeding logic into a custom management command for production environments)*
         ```bash
-        docker-compose exec web python manage.py import_managers managers.csv
+        docker-compose exec web python manage.py shell < scripts/populate_db.py
         ```
 
 ---
 
-## 5. Auteur
+## Author & Contact
 
-**[Sara elghayati]** - Data Scientist (Stagiaire)
-*   **Département :** Data & IA, Orange Maroc
-*   **Email :**  saraelghayati726@gmail.com
-*   **LinkedIn :** https://github.com/saragh66/forcasting_anomalies
+**Sara ELGHAYATI** - Data Scientist
+
+-   **Project developed at:** Orange Morocco, Data & AI Department
+- 
+-   **GitHub:** [github.com/saragh66](https://github.com/saragh66)
+-   **Professional Inquiries:** [saraelghayati726@gmail.com](mailto:saraelghayati726@gmail.com)

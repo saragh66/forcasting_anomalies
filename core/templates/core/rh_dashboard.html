@@ -5,6 +5,18 @@
 {% block extra_css %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
+    /* Styles pour la barre de navigation */
+    .navbar-custom { 
+        background-color: white; 
+        box-shadow: 0 2px 4px rgba(0,0,0,.05); 
+    }
+    .nav-link.active {
+        color: #FF7900; /* Orange */
+        font-weight: 600;
+        border-bottom: 2px solid #FF7900;
+    }
+
+    /* Styles spécifiques à la page du dashboard */
     .kpi-box {
         background-color: #fff; border-radius: 0.75rem; padding: 1.5rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08); text-align: center;
@@ -19,85 +31,111 @@
     }
 </style>
 {% endblock %}
-<nav class="navbar navbar-expand-lg navbar-custom mb-4">
+
+
+{% block content %}
+<!-- Barre de Navigation Supérieure (STRUCTURE CORRIGÉE ET COMPLÈTE) -->
+<nav class="navbar navbar-expand-lg navbar-custom">
     <div class="container-fluid">
+        <!-- Logo et Titre de la plateforme -->
         <a class="navbar-brand" href="{% url 'core:rh_dashboard' %}">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo Orange">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/100px-Orange_logo.svg.png" alt="Logo" style="height: 28px;">
+            <span class="ms-2 fw-bold align-middle">Plateforme RH</span>
         </a>
+
+        <!-- Bouton hamburger pour le mode mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
-                <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'core:historique_emails' %}">Historique</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+            <!-- Liens de navigation centrés -->
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:rh_dashboard' %}active{% endif %}" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:liste_anomalies' %}active{% endif %}" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:historique_emails' %}active{% endif %}" href="{% url 'core:historique_emails' %}">Historique</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:statistiques_view' %}active{% endif %}" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.namespace == 'analytics' %}active{% endif %}" href="{% url 'analytics:dashboard' %}">Analyse Prédictive</a></li>
             </ul>
+            
+            <!-- Bouton de déconnexion à droite -->
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Déconnexion</a></li>
+                <li class="nav-item">
+                    <form id="logout-form" method="post" action="{% url 'core:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">
+                            Déconnexion
+                        </button>
+                    </form>
+                </li>
                 {% endif %}
             </ul>
         </div>
     </div>
 </nav>
 
-{% block content %}
-<h1 class="mb-4" style="font-weight: 300;">Dashboard RH</h1>
+<!-- Contenu principal de la page du Dashboard -->
+<main class="container-fluid p-4">
+    <h1 class="mb-4" style="font-weight: 300;">Dashboard RH</h1>
 
-<!-- Rangée des Indicateurs Clés (KPIs) -->
-<div class="row g-4 mb-4">
-    <div class="col-md-6 col-xl-4">
-        <div class="kpi-box">
-            <div class="icon"><i class="fas fa-users"></i></div>
-            <div class="value">{{ total_collaborateurs }}</div>
-            <div class="label">Collaborateurs Gérés</div>
+    <!-- Rangée des Indicateurs Clés (KPIs) -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-4">
+            <div class="kpi-box">
+                <div class="icon"><i class="fas fa-users"></i></div>
+                <div class="value">{{ total_collaborateurs }}</div>
+                <div class="label">Collaborateurs Gérés</div>
+            </div>
         </div>
-    </div>
-    <div class="col-md-6 col-xl-4">
-        <div class="kpi-box">
-            <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
-            <div class="value">{{ total_anomalies }}</div>
-            <div class="label">Anomalies Totales</div>
+        <div class="col-md-6 col-xl-4">
+            <div class="kpi-box">
+                <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="value">{{ total_anomalies }}</div>
+                <div class="label">Anomalies Totales</div>
+            </div>
         </div>
-    </div>
-    <div class="col-md-12 col-xl-4">
-        <div class="kpi-box d-flex flex-column justify-content-center h-100">
-            <h5 class="mb-3">Actions Rapides</h5>
-            <div>
-                <a href="{% url 'core:upload_csv' %}" class="btn btn-orange"><i class="fas fa-upload me-2"></i>Importer un Fichier</a>
-                <a href="{% url 'core:liste_anomalies' %}" class="btn btn-outline-secondary"><i class="fas fa-list-ul me-2"></i>Voir les Anomalies</a>
+        <div class="col-md-12 col-xl-4">
+            <div class="kpi-box d-flex flex-column justify-content-center h-100">
+                <h5 class="mb-3">Actions Rapides</h5>
+                <div>
+                    <a href="{% url 'core:upload_csv' %}" class="btn btn-orange"><i class="fas fa-upload me-2"></i>Importer un Fichier</a>
+                    <a href="{% url 'core:liste_anomalies' %}" class="btn btn-outline-secondary"><i class="fas fa-list-ul me-2"></i>Voir les Anomalies</a>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Rangée des Graphiques -->
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card chart-card">
-            <div class="card-body">
-                <h5 class="card-title mb-3"> Directions par Anomalies</h5>
-                {% if stats_par_direction %}
-                    <canvas id="directionsChart"></canvas>
-                {% else %}
-                    <p class="text-muted text-center mt-4">Aucune donnée à afficher pour les directions.</p>
-                {% endif %}
+    <!-- Rangée des Graphiques -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card chart-card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Directions par Anomalies</h5>
+                    {% if stats_par_direction %}
+                        <canvas id="directionsChart"></canvas>
+                    {% else %}
+                        <p class="text-muted text-center mt-4">Aucune donnée à afficher pour les directions.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card chart-card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Top 5 des Départements par Anomalies</h5>
+                    {% if stats_par_departement %}
+                        <canvas id="departementsChart"></canvas>
+                    {% else %}
+                        <p class="text-muted text-center mt-4">Aucune donnée à afficher pour les départements.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="card chart-card">
-            <div class="card-body">
-                <h5 class="card-title mb-3">Top 5 des Départements par Anomalies</h5>
-                {% if stats_par_departement %}
-                    <canvas id="departementsChart"></canvas>
-                {% else %}
-                    <p class="text-muted text-center mt-4">Aucune donnée à afficher pour les départements.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
+</main>
 {% endblock %}
+
 
 {% block extra_js %}
 <!-- On passe les données de Django à JavaScript de manière SÉCURISÉE -->

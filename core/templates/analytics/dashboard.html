@@ -2,23 +2,55 @@
 {% load static %}
 
 {% block title %}Analyse Prédictive - Dashboard{% endblock %}
-
+{% block extra_css %}
+<style>
+    /* Style pour la barre de navigation, identique aux autres pages */
+    .navbar-custom { 
+        background-color: white; 
+        box-shadow: 0 2px 4px rgba(0,0,0,.05); 
+    }
+    .nav-link.active {
+        color: #FF7900; /* Orange */
+        font-weight: 600;
+        border-bottom: 2px solid #FF7900;
+    }
+</style>
+{% endblock %}
 {% block content %}
 <nav class="navbar navbar-expand-lg navbar-custom mb-4">
     <div class="container-fluid">
+        <!-- Logo et Titre de la plateforme -->
         <a class="navbar-brand" href="{% url 'core:rh_dashboard' %}">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo Orange">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/100px-Orange_logo.svg.png" alt="Logo" style="height: 28px;">
+            <span class="ms-2 fw-bold align-middle">Plateforme RH</span>
         </a>
+
+        <!-- Bouton hamburger pour le mode mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
-                <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'core:historique_emails' %}">Historique</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+            <!-- Liens de navigation centrés -->
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:rh_dashboard' %}active{% endif %}" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:liste_anomalies' %}active{% endif %}" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:historique_emails' %}active{% endif %}" href="{% url 'core:historique_emails' %}">Historique</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:statistiques_view' %}active{% endif %}" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.namespace == 'analytics' %}active{% endif %}" href="{% url 'analytics:dashboard' %}">Analyse Prédictive</a></li>
             </ul>
+            
+            <!-- Bouton de déconnexion à droite -->
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Déconnexion</a></li>
+                <li class="nav-item">
+                    <form id="logout-form" method="post" action="{% url 'core:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">
+                            Déconnexion
+                        </button>
+                    </form>
+                </li>
                 {% endif %}
             </ul>
         </div>

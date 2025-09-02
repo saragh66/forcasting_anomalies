@@ -19,10 +19,10 @@
   <div class="landing-card text-center">
     <h1>Bienvenue sur <span class="highlight">Orange RH</span></h1>
     <p>Choisissez votre interface :</p>
-    <div class="landing-buttons">
-      <a href="{% url 'login_rh' %}"  class="btn-pill btn-rh">Connexion RH</a>
-      <a href="{% url 'login_sup' %}" class="btn-pill btn-sup">Connexion Supérieur</a>
-    </div>
+  <div class="landing-buttons">
+  <a href="{% url 'accounts:login_rh' %}"  class="btn-pill btn-rh">Connexion RH</a>
+  <a href="{% url 'accounts:login_sup' %}" class="btn-pill btn-sup">Connexion Supérieur</a>
+  </div>
   </div>
 </div>
 {% endblock %}

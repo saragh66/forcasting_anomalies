@@ -1,6 +1,7 @@
 # requirements.txt
 Django~=5.0
 celery[redis]
+whitenoise  
 pandas
 numpy
 python-dateutil

@@ -3,48 +3,71 @@
 {% block title %}Historique des Emails - Orange RH{% endblock %}
 
 {% block extra_css %}
-    <style>
-        body { background-color: #f0f2f5; }
-        .navbar-custom { background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,.05); padding: 1rem 1.5rem; }
-        .navbar-brand img { height: 40px; }
-        .nav-link { color: #343a40 !important; }
-        .nav-link.active { font-weight: bold; color: #FF7900 !important; }
-        .card { border: none; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; }
-        .card-header { font-weight: 300; font-size: 1.75rem; background-color: #f8f9fa; padding: 1.5rem; border-bottom: 1px solid #dee2e6; color: #343a40; }
-        .btn-orange { background-color: #FF7900; color: white; border: none; transition: background-color 0.3s ease; }
-        .btn-orange:hover { background-color: #d96800; color: white; }
-        .table th { font-weight: 500; background-color: #e9ecef; color: #495057; border-bottom: 2px solid #dee2e6; }
-        .table td { vertical-align: middle; }
-        .filters-form { background-color: #ffffff; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .filter-inputs > div { display: none; }
-        .filter-inputs > div.active { display: block; }
-        .form-check-label { color: #495057; }
-        .pagination .page-item.disabled .page-link { color: #6c757d; background-color: #e9ecef; border-color: #dee2e6; }
-        .pagination .page-item .page-link { color: #FF7900; }
-        .pagination .page-item.active .page-link { background-color: #FF7900; border-color: #FF7900; color: white; }
-        .anomaly-detail-item { display: block; margin-bottom: 0.25rem; font-size: 0.9em; }
-    </style>
+<style>
+    /* Styles pour la barre de navigation (cohérence) */
+    .navbar-custom { 
+        background-color: white; 
+        box-shadow: 0 2px 4px rgba(0,0,0,.05); 
+    }
+    .nav-link.active {
+        color: #FF7900 !important; /* Orange */
+        font-weight: 600;
+        border-bottom: 2px solid #FF7900;
+    }
+
+    /* Styles spécifiques à la page d'historique */
+    body { background-color: #f8f9fa; }
+    .card { border: none; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .card-header { font-weight: 600; background-color: transparent; border-bottom: 1px solid #e9ecef; padding: 1rem 1.5rem; }
+    .btn-orange { background-color: #FF7900; color: white; border-color: #FF7900; }
+    .btn-orange:hover { background-color: #d96800; }
+    .table thead th { background-color: #f1f3f5; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; }
+    .filters-form { background-color: #ffffff; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem; }
+    .filter-inputs > div { display: none; }
+    .filter-inputs > div.active { display: block; }
+    .pagination .page-item .page-link { color: #FF7900; }
+    .pagination .page-item.active .page-link { background-color: #FF7900; border-color: #FF7900; color: white; }
+    .anomaly-detail-item { display: block; margin-bottom: 0.25rem; font-size: 0.9em; }
+</style>
 {% endblock %}
 
-{# Ce bloc vide va cacher les messages de notification sur cette page #}
-{% block messages %}{% endblock messages %}
 
 {% block content %}
-<nav class="navbar navbar-expand-lg navbar-custom mb-4">
+<!-- Barre de Navigation Supérieure (STRUCTURE CORRIGÉE ET COMPLÈTE) -->
+<nav class="navbar navbar-expand-lg navbar-custom">
     <div class="container-fluid">
+        <!-- Logo et Titre de la plateforme -->
         <a class="navbar-brand" href="{% url 'core:rh_dashboard' %}">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/240px-Orange_logo.svg.png" alt="Logo Orange">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/100px-Orange_logo.svg.png" alt="Logo" style="height: 28px;">
+            <span class="ms-2 fw-bold align-middle">Plateforme RH</span>
         </a>
+
+        <!-- Bouton hamburger pour le mode mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
-                <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'core:historique_emails' %}">Historique</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+            <!-- Liens de navigation centrés -->
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:rh_dashboard' %}active{% endif %}" href="{% url 'core:rh_dashboard' %}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:liste_anomalies' %}active{% endif %}" href="{% url 'core:liste_anomalies' %}">Anomalies</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:historique_emails' %}active{% endif %}" href="{% url 'core:historique_emails' %}">Historique</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.view_name == 'core:statistiques_view' %}active{% endif %}" href="{% url 'core:statistiques_view' %}">Statistiques</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.namespace == 'analytics' %}active{% endif %}" href="{% url 'analytics:dashboard' %}">Analyse Prédictive</a></li>
             </ul>
+            
+            <!-- Bouton de déconnexion à droite -->
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Déconnexion</a></li>
+                <li class="nav-item">
+                    <form id="logout-form" method="post" action="{% url 'core:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">
+                            Déconnexion
+                        </button>
+                    </form>
+                </li>
                 {% endif %}
             </ul>
         </div>

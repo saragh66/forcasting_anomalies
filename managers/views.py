@@ -3,50 +3,64 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Prefetch
 from core.models import Anomalie, EmailHistory, Collaborateur, Pointage
 
-def is_manager(user):
-    """Vérifie si l'utilisateur est dans le groupe 'Manager'."""
-    return user.groups.filter(name='Manager').exists()
-
 # managers/views.py
+# Fichier : managers/views.py
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Count, Q
+from core.models import Collaborateur, Pointage, Departement
+
+def is_manager(user):
+    return user.groups.filter(name='Manager').exists()
 
 @login_required
 @user_passes_test(is_manager)
 def manager_dashboard(request):
     """
-    Affiche le dashboard pour le manager, avec les KPIs et la liste de son équipe.
+    Affiche un dashboard de performance pour l'équipe du manager connecté.
+    (VERSION AVEC LOGIQUE DE CALCUL DÉFINITIVE)
     """
-    # 1. Identifier les collaborateurs de l'équipe du manager connecté
-    collaborateurs_equipe = Collaborateur.objects.filter(
-        departement__manager=request.user
-    )
+    # 1. Identifier les DÉPARTEMENTS gérés par le manager. C'est la source de vérité.
+    departements_equipe = Departement.objects.filter(manager=request.user)
+
+    # 2. Identifier les collaborateurs ACTUELLEMENT dans ces départements (pour le KPI total)
+    collaborateurs_actuels_equipe = Collaborateur.objects.filter(departement__in=departements_equipe)
+    total_collaborateurs = collaborateurs_actuels_equipe.count()
+
+    # 3. Identifier les collaborateurs (actuels ou passés) ayant eu des anomalies DANS CES DÉPARTEMENTS
+    collaborateurs_avec_anomalies = Collaborateur.objects.filter(
+        pointage__anomalies__isnull=False,
+        pointage__departement__in=departements_equipe
+    ).distinct()
     
-    # 2. Compter les anomalies et préparer les données pour le tableau et le graphique
-    collaborateurs_avec_anomalies = collaborateurs_equipe.annotate(
-        total_anomalies=Count('pointage__anomalies')
+    nombre_avec_anomalies = collaborateurs_avec_anomalies.count()
+    
+    # 4. Calculer les KPIs logiques
+    kpis = {
+        'total_collaborateurs': total_collaborateurs,
+        'avec_anomalies': nombre_avec_anomalies,
+        'sans_anomalie': total_collaborateurs - nombre_avec_anomalies
+    }
+    
+    # 5. Préparer les données pour le graphique et la liste
+    # On annote les collaborateurs avec le compte de leurs anomalies UNIQUEMENT dans les départements du manager
+    collaborateurs_par_anomalie = collaborateurs_avec_anomalies.annotate(
+        total_anomalies=Count(
+            'pointage__anomalies', 
+            filter=Q(pointage__departement__in=departements_equipe)
+        )
     ).order_by('-total_anomalies')
 
-    # 3. Calculer les KPIs
-    total_collaborateurs = collaborateurs_equipe.count()
-    collab_avec_anomalie = collaborateurs_equipe.filter(pointage__anomalies__isnull=False).distinct().count()
-    collab_sans_anomalie = total_collaborateurs - collab_avec_anomalie
-    
-    # 4. MODIFIÉ : Convertir le QuerySet en une liste de dictionnaires pour le JSON
-    # On sélectionne uniquement les champs dont le JavaScript a besoin.
-    collaborateurs_pour_json = list(collaborateurs_avec_anomalies.values(
-        'prenom', 'nom', 'total_anomalies'
-    ))
-
-    # 5. Préparer les données pour le template
+    # 6. Créer le contexte pour le template
     context = {
-        'stats': {
-            'total_collaborateurs': total_collaborateurs,
-            'collab_avec_anomalie': collab_avec_anomalie,
-            'collab_sans_anomalie': collab_sans_anomalie,
-        },
-        'collaborateurs_table': collaborateurs_avec_anomalies, # Pour la boucle du tableau HTML
-        'collaborateurs_json': collaborateurs_pour_json,    # Pour le script json_script
+        'kpis': kpis,
+        'collaborateurs_par_anomalie': collaborateurs_par_anomalie,
     }
-    return render(request, 'managers/dashboard.html', context)
+
+    return render(request, "managers/dashboard.html", context)
+
+# ... (le reste de vos vues ne change pas)
 
 @login_required
 @user_passes_test(is_manager)

@@ -17,34 +17,26 @@ class RHLoginView(LoginView):
 
     def get_success_url(self):
         # Cette redirection est correcte
-        return reverse('core:rh_dashboard')
+         return reverse('core:upload_csv')
 
 # --------------------
 # Login Manager
 # --------------------
 class ManagerLoginView(LoginView):
-    template_name = 'accounts/manager_login.html' # Assurez-vous que ce chemin est bon
+    template_name = 'accounts/manager_login.html'
     authentication_form = AuthenticationForm
 
     def form_valid(self, form):
-        """
-        Cette méthode est appelée APRÈS que les identifiants sont validés,
-        mais AVANT la redirection.
-        """
-        # On exécute la logique de connexion de Django en premier
         super().form_valid(form)
         
-        # On vérifie si l'utilisateur qui vient de se connecter est bien un manager
         if self.request.user.groups.filter(name='Manager').exists():
-            # Si c'est un manager, on le laisse continuer vers son dashboard
             return redirect(self.get_success_url())
         else:
-            # Si un utilisateur RH ou autre essaie de se connecter ici,
-            # on le déconnecte par sécurité et on affiche une erreur.
             logout(self.request)
             messages.error(self.request, "Accès refusé. Cet espace est réservé aux managers.")
-            return redirect('login_sup') # Remplacez par le nom de votre URL de login manager
+            # CORRECTION APPLIQUÉE ICI :
+            return redirect('accounts:login_sup')
 
     def get_success_url(self):
-        # MODIFIÉ : On utilise le bon namespace 'managers' (au pluriel)
+        # Cette ligne est correcte, en supposant que vous avez une app 'managers' avec une url 'dashboard'
         return reverse('managers:dashboard')

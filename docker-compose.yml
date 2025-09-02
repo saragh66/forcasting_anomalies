@@ -1,71 +1,105 @@
 # ==============================================================================
-# Fichier Docker Compose pour la "Plateforme RH"
+# Fichier Docker Compose (VERSION FINALE PROPRE ET SIMPLIFIÉE)
 # ==============================================================================
 
-version: '3.8' # Spécifie la version de la syntaxe Docker Compose
-
 services:
-  # --- Service 1: La Base de Données MySQL ---
   db:
-    image: mysql:8.0 # Utilise l'image officielle de MySQL version 8.0
+    image: mysql:8.0
     container_name: mysql_rh_db
     volumes:
-      - mysql_data:/var/lib/mysql # Persiste les données de la DB dans un volume nommé
+      - mysql_data:/var/lib/mysql
     environment:
-      # Variables d'environnement pour configurer MySQL au premier lancement
       MYSQL_ROOT_PASSWORD: your_strong_root_password
-      MYSQL_DATABASE: plateforme_rh
-      MYSQL_USER: rh_user
-      MYSQL_PASSWORD: your_strong_password
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "3307:3306" # Mappe le port 3306 du conteneur au port 3307 de votre machine locale
-    restart: unless-stopped # Redémarre le conteneur s'il plante, sauf si vous l'arrêtez manuellement
+      - "3307:3306"
+    restart: unless-stopped
+    networks:
+      - app-network
 
-  # --- Service 2: Le Broker de Messages Redis ---
   redis:
-    image: redis:6.2-alpine # Utilise une image Redis légère
+    image: redis:6.2-alpine
     container_name: redis_rh_broker
     restart: unless-stopped
+    networks:
+      - app-network
 
-  # --- Service 3: L'Application Web Django ---
   web:
-    build: . # Construit l'image en utilisant le Dockerfile dans le dossier courant
+    build: .
     container_name: django_rh_web
-    command: > # La commande pour lancer le serveur Django à l'intérieur du conteneur
-      sh -c "python manage.py migrate && 
+    
+    # Commande multiligne pour attendre la DB, migrer, puis lancer le serveur
+    command: >
+      sh -c "echo 'Attente de 10s pour la base de données...' &&
+             sleep 10 &&
+             echo 'Application des migrations...' &&
+             python manage.py migrate &&
+             echo 'Lancement du serveur...' &&
              python manage.py runserver 0.0.0.0:8000"
+    
     volumes:
-      - .:/app # Monte le dossier local du projet dans /app. Les changements de code sont reflétés en direct.
-    ports:
-      - "8000:8000" # Mappe le port 8000 du conteneur au port 8000 de votre machine
-    depends_on:
-      - db      # Indique que ce service doit attendre que `db` soit démarré
-      - redis   # et que `redis` soit démarré
+      - .:/app
+      
     environment:
-      # On passe les informations de connexion à la base de données à Django
-      - DB_NAME=plateforme_rh
-      - DB_USER=rh_user
-      - DB_PASSWORD=your_strong_password
-      - DB_HOST=db       # Le nom du service de la base de données
-      - DB_PORT=3306
-      - SECRET_KEY=votre_super_secret_key_pour_la_production # À changer en production !
-      - DEBUG=1          # 1 pour True, 0 pour False
-    restart: unless-stopped
-
-  # --- Service 4: Le Worker Celery ---
-  celery:
-    build: . # Utilise la même image que le service web, car il a besoin du même code
-    container_name: celery_rh_worker
-    command: python -m celery -A celery_app worker -l info --pool=solo
-    volumes:
-      - .:/app # Partage le même code que le service web
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      
+    ports:
+      - "8000:8000"
     depends_on:
-      - web     # S'assure que le web est prêt (pour les modèles Django)
-      - redis   # Dépend de Redis pour la file d'attente
+      - db
+      - redis
     restart: unless-stopped
+    networks:
+      - app-network
 
-# --- Volume Nommé ---
-# Définit un volume persistant pour les données MySQL, pour ne pas les perdre
-# si le conteneur `db` est supprimé et recréé.
+  celery:
+    build: .
+    container_name: celery_rh_worker
+    
+    # Commande multiligne pour attendre, puis lancer le worker Celery
+    command: >
+      sh -c "echo 'Attente de 10s pour la base de données...' &&
+             sleep 10 &&
+             echo 'Lancement du worker Celery...' &&
+             python -m celery -A celery_app worker -l info --pool=solo"
+    
+    volumes:
+      - .:/app
+
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - redis
+      - db  # On s'assure que celery attend aussi la DB
+    restart: unless-stopped
+    networks:
+      - app-network
+
+# Déclaration du réseau partagé
+networks:
+  app-network:
+    driver: bridge
+
+# Déclaration du volume pour la persistance des données
 volumes:
   mysql_data:

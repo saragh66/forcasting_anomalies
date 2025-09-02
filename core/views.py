@@ -328,18 +328,5 @@ def export_email_pdf(request):
     HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(response)
     return response
 
-# ==============================================================================
-# VUES POUR LE GROUPE MANAGER
-# ==============================================================================
 
-@login_required
-@user_passes_test(is_manager)
-def manager_dashboard(request):
-    """Affiche un tableau de bord pour le manager avec les anomalies de son équipe."""
-    collaborateurs_equipe_ids = Collaborateur.objects.filter(departement__manager=request.user).values_list('id', flat=True)
-    anomalies = Anomalie.objects.filter(
-        pointage__collaborateur_id__in=collaborateurs_equipe_ids
-    ).select_related('pointage__collaborateur').order_by('-pointage__date')
-    
-    context = { "anomalies": anomalies }
-    return render(request, "managers/manager_dashboard.html", context)
+

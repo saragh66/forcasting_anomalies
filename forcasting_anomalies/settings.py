@@ -1,15 +1,10 @@
 import os
 from pathlib import Path
 
-from pathlib import Path
-from decouple import config
-
-# Charger le fichier .env
-
 # ==========================
 # Répertoires de base
 # ==========================
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parents[1]
 
 # ==========================
 # Sécurité
@@ -22,14 +17,13 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 # Applications installées
 # ==========================
 INSTALLED_APPS = [
+    'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    #'django_q',
-
+    
     # Mes apps
     'accounts',
     'core',
@@ -42,6 +36,7 @@ INSTALLED_APPS = [
 # ==========================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,7 +53,7 @@ ROOT_URLCONF = 'forcasting_anomalies.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "templates"],  # dossier global templates
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -75,28 +70,47 @@ WSGI_APPLICATION = 'forcasting_anomalies.wsgi.application'
 ASGI_APPLICATION = 'forcasting_anomalies.asgi.application'
 
 # ==========================
-# Auth & Custom User
+# Auth & Custom User (SECTION CORRIGÉE ET FIABILISÉE)
 # ==========================
 AUTH_USER_MODEL = 'accounts.User'
 
-LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = 'upload_csv'
-LOGOUT_REDIRECT_URL = "landing_page"
+# L'URL de connexion par défaut. Utilisée par @login_required.
+# Doit correspondre au nom de votre URL de connexion dans accounts/urls.py
+LOGIN_URL = "accounts:login_rh"
+
+# La page par défaut où l'utilisateur est redirigé APRÈS une connexion réussie.
+# Note : Cette valeur peut être surchargée par la méthode `get_success_url` dans vos vues de connexion.
+LOGIN_REDIRECT_URL = 'core:rh_dashboard'
+
+# La page où l'utilisateur est redirigé APRÈS une déconnexion.
+LOGOUT_REDIRECT_URL = "core:landing_page"
 
 
 # ==========================
 # Base de données MySQL
 # ==========================
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME', 'forecast_db'),
-        'USER': os.getenv('DB_USER', 'root'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '3306'),
+IN_BUILD_MODE = os.getenv('IN_BUILD_MODE') == 'True'
+
+if IN_BUILD_MODE:
+    # Pendant le build, on utilise une fausse DB en mémoire pour que 'collectstatic' fonctionne
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
     }
-}
+else:
+    # Quand le conteneur tourne, on lit les variables du .env pour se connecter à la vraie DB MySQL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST'),
+            'PORT': os.getenv('DB_PORT', '3306'),
+        }
+    }
 
 # ==========================
 # Validation mots de passe
@@ -126,6 +140,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "media"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ==========================
 # Auto Field
@@ -135,19 +150,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ==========================
 # Email SMTP
 # ==========================
-
-#==========================
-#Email SMTP
-#==========================
-# settings.py
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = "smtp.gmail.com" # Directly set
-EMAIL_PORT = 587             # Directly set
-EMAIL_HOST_USER = "saraelghayati726@gmail.com" # Directly set
-EMAIL_HOST_PASSWORD = "mafb mvki floj zsyz"   # Directly set your App Password
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "saraelghayati726@gmail.com"
+EMAIL_HOST_PASSWORD = "mafb mvki floj zsyz"
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = "saraelghayati726@gmail.com" # Directly set
+DEFAULT_FROM_EMAIL = "saraelghayati726@gmail.com"
+
 # ==========================
 # Celery / Redis
 # ==========================
@@ -157,16 +167,5 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
-# Ajoutez ce bloc à la fin de votre fichier settings.py
-#Q_CLUSTER = {
-    #'name': 'orange_rh_cluster',
-    #'workers': 4,  # Nombre de workers, 4 est un bon début
-    #'timeout': 90, # Temps max pour une tâche
-    #'retry': 120,  # Réessayer après 2 minutes si ça échoue
-    #'queue_limit': 50,
-    #'bulk': 10,
-    #'orm': 'default',
-     #'sync': True, # Utilise la base de données Django par défaut comme file d'attente
-#}
-LOGOUT_REDIRECT_URL = 'core:landing_page'
-LOGIN_REDIRECT_URL = 'core:redirect_after_login'
+
+

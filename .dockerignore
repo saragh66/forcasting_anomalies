@@ -1,0 +1,7 @@
+# Fichier : .dockerignore
+__pycache__
+*.pyc
+.venv
+.git
+.idea
+staticfiles

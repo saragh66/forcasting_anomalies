@@ -59,12 +59,12 @@
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}
                 <li class="nav-item">
-                    <form id="logout-form" method="post" action="{% url 'logout' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">
-                            Déconnexion
-                        </button>
-                    </form>
+                <form id="logout-form" method="post" action="{% url 'core:logout' %}">
+                    {% csrf_token %}
+                <button type="submit" class="nav-link" style="border: none; background: none; cursor: pointer;">
+                  Déconnexion
+                </button>
+                </form>
                 </li>
                 {% endif %}
             </ul>
